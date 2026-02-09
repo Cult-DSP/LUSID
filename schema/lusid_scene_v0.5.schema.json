@@ -1,0 +1,142 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/Cult-DSP/sonoPleth/LUSID/schema/lusid_scene_v0.5.schema.json",
+  "title": "LUSID Scene v0.5",
+  "description": "A time-sequenced node graph for spatial audio. Each frame captures the state of all active nodes at a specific timestamp.",
+  "type": "object",
+  "required": ["version", "frames"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "0.5",
+      "description": "Schema version. Must be '0.5'."
+    },
+    "sampleRate": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Sample rate in Hz. Required when timeUnit is 'samples', otherwise optional."
+    },
+    "timeUnit": {
+      "type": "string",
+      "enum": ["seconds", "s", "samples", "samp", "milliseconds", "ms"],
+      "default": "seconds",
+      "description": "Unit for all frame timestamps. Defaults to 'seconds'."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional top-level metadata (title, author, notes, etc.).",
+      "additionalProperties": true
+    },
+    "frames": {
+      "type": "array",
+      "description": "Ordered list of scene snapshots. Each frame captures the full state at a point in time.",
+      "items": { "$ref": "#/definitions/frame" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "frame": {
+      "type": "object",
+      "required": ["time", "nodes"],
+      "properties": {
+        "time": {
+          "type": "number",
+          "description": "Timestamp in the unit specified by the top-level timeUnit."
+        },
+        "nodes": {
+          "type": "array",
+          "description": "All active nodes at this timestep.",
+          "items": { "$ref": "#/definitions/node" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "Hierarchical node ID in 'X.Y' format. X = group, Y = hierarchy level (1 = parent)."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["audio_object", "LFE", "spectral_features", "agent_state"],
+          "description": "Node type."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "audio_object" } }
+          },
+          "then": {
+            "properties": {
+              "id": true,
+              "type": true,
+              "cart": {
+                "type": "array",
+                "items": { "type": "number" },
+                "minItems": 3,
+                "maxItems": 3,
+                "description": "Cartesian direction vector [x, y, z]. x: left(-)/right(+), y: back(-)/front(+), z: down(-)/up(+)."
+              },
+              "gain": {
+                "type": "number",
+                "description": "Optional per-object gain multiplier (default 1.0)."
+              }
+            },
+            "required": ["id", "type", "cart"],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "LFE" } }
+          },
+          "then": {
+            "properties": {
+              "id": true,
+              "type": true
+            },
+            "required": ["id", "type"],
+            "additionalProperties": false,
+            "description": "LFE node. No positional data — routed directly to subwoofers."
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "spectral_features" } }
+          },
+          "then": {
+            "properties": {
+              "id": true,
+              "type": true,
+              "centroid": { "type": "number", "description": "Spectral centroid in Hz." },
+              "flux": { "type": "number", "description": "Spectral flux (0.0–1.0)." },
+              "bandwidth": { "type": "number", "description": "Spectral bandwidth in Hz." }
+            },
+            "required": ["id", "type"],
+            "additionalProperties": true,
+            "description": "Spectral analysis data attached to parent audio_object."
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "agent_state" } }
+          },
+          "then": {
+            "properties": {
+              "id": true,
+              "type": true
+            },
+            "required": ["id", "type"],
+            "additionalProperties": true,
+            "description": "AI/agent state data. Free-form fields beyond id and type."
+          }
+        }
+      ]
+    }
+  }
+}
