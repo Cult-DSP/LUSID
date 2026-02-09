@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Union
 from .scene import (
     AudioObjectNode,
     AgentStateNode,
+    DirectSpeakerNode,
     Frame,
     LFENode,
     LusidScene,
@@ -83,6 +84,8 @@ def _parse_node(raw: Dict[str, Any]) -> Optional[Node]:
     # -- dispatch by type --
     if node_type == "audio_object":
         return _parse_audio_object(node_id, raw)
+    elif node_type == "direct_speaker":
+        return _parse_direct_speaker(node_id, raw)
     elif node_type == "LFE":
         return LFENode(id=node_id)
     elif node_type == "spectral_features":
@@ -114,6 +117,32 @@ def _parse_audio_object(node_id: str, raw: Dict[str, Any]) -> Optional[AudioObje
         gain = 1.0
 
     return AudioObjectNode(id=node_id, cart=[float(x), float(y), float(z)], gain=float(gain))
+
+
+def _parse_direct_speaker(node_id: str, raw: Dict[str, Any]) -> Optional[DirectSpeakerNode]:
+    """Parse a direct_speaker node (fixed-position bed channel)."""
+    cart = raw.get("cart")
+    if cart is None:
+        _warn(f"direct_speaker '{node_id}' missing 'cart', skipping")
+        return None
+    if not isinstance(cart, list) or len(cart) < 3:
+        _warn(f"direct_speaker '{node_id}' 'cart' must be [x, y, z], skipping")
+        return None
+
+    x, y, z = cart[0], cart[1], cart[2]
+    if not all(_is_finite(v) for v in (x, y, z)):
+        _warn(f"direct_speaker '{node_id}' has NaN/Inf in cart, skipping")
+        return None
+
+    speaker_label = str(raw.get("speakerLabel", ""))
+    channel_id = str(raw.get("channelID", ""))
+
+    return DirectSpeakerNode(
+        id=node_id,
+        cart=[float(x), float(y), float(z)],
+        speakerLabel=speaker_label,
+        channelID=channel_id,
+    )
 
 
 def _parse_spectral_features(node_id: str, raw: Dict[str, Any]) -> SpectralFeaturesNode:

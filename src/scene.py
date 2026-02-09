@@ -6,6 +6,7 @@ Dataclass representations of the LUSID scene graph:
 
 Node types:
   - AudioObjectNode  (type="audio_object")  — spatial source with cart [x,y,z]
+  - DirectSpeakerNode (type="direct_speaker") — fixed bed channel with position + label
   - LFENode          (type="LFE")           — low-frequency effects, no position
   - SpectralFeaturesNode (type="spectral_features") — analysis data
   - AgentStateNode   (type="agent_state")   — AI/agent metadata
@@ -86,6 +87,45 @@ class AudioObjectNode:
 
 
 @dataclass
+class DirectSpeakerNode:
+    """A fixed-position bed channel (e.g., L, R, C, Lss, Rss, etc.).
+
+    Treated by the renderer as an audio_object with a single keyframe.
+    The speakerLabel and channelID are informational metadata.
+    """
+    id: str                       # e.g. "1.1"
+    cart: List[float]             # [x, y, z]
+    speakerLabel: str = ""        # e.g. "RC_L", "RC_Rss"
+    channelID: str = ""           # e.g. "AC_00011001"
+
+    @property
+    def type(self) -> str:
+        return "direct_speaker"
+
+    @property
+    def group(self) -> int:
+        """Group number (X in X.Y)."""
+        return int(self.id.split(".")[0])
+
+    @property
+    def hierarchy(self) -> int:
+        """Hierarchy level (Y in X.Y)."""
+        return int(self.id.split(".")[1])
+
+    def to_dict(self) -> Dict[str, Any]:
+        d: Dict[str, Any] = {
+            "id": self.id,
+            "type": self.type,
+            "cart": list(self.cart),
+        }
+        if self.speakerLabel:
+            d["speakerLabel"] = self.speakerLabel
+        if self.channelID:
+            d["channelID"] = self.channelID
+        return d
+
+
+@dataclass
 class LFENode:
     """Low-frequency effects node — routed directly to subwoofers, not spatialized."""
     id: str
@@ -144,7 +184,7 @@ class AgentStateNode:
 
 
 # Union of all node types
-Node = Union[AudioObjectNode, LFENode, SpectralFeaturesNode, AgentStateNode]
+Node = Union[AudioObjectNode, DirectSpeakerNode, LFENode, SpectralFeaturesNode, AgentStateNode]
 
 
 # ---------------------------------------------------------------------------
@@ -217,6 +257,14 @@ class LusidScene:
         groups: set[int] = set()
         for frame in self.frames:
             for node in frame.get_nodes_by_type("audio_object"):
+                groups.add(node.group)
+        return sorted(groups)
+
+    def direct_speaker_groups(self) -> List[int]:
+        """Return sorted list of unique group IDs that contain direct_speaker nodes."""
+        groups: set[int] = set()
+        for frame in self.frames:
+            for node in frame.get_nodes_by_type("direct_speaker"):
                 groups.add(node.group)
         return sorted(groups)
 

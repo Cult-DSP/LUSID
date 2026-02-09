@@ -4,46 +4,55 @@ Python implementation of the LUSID Scene v0.5 format: a time-sequenced node grap
 
 ## Overview
 
-LUSID Scene v0.5 represents spatial audio scenes as a timeline of **frames**, each containing **nodes** with hierarchical IDs (`X.Y`) and typed data. This package provides:
+LUSID Scene v0.5 represents spatial audio scenes as a timeline of **frames**, each containing **nodes** with hierarchical IDs (`X.Y`) and typed data. The LUSID scene (`scene.lusid.json`) is the **canonical spatial data format** — the C++ renderer reads it directly.
 
-- **Data model** (`src/scene.py`) — dataclasses for `LusidScene`, `Frame`, and node types
+This package provides:
+
+- **Data model** (`src/scene.py`) — dataclasses for `LusidScene`, `Frame`, and 5 node types
 - **Parser** (`src/parser.py`) — load and validate LUSID JSON files with graceful fallback
-- **Transcoder** (`src/transcoder.py`) — convert LUSID scenes to sonoPleth `renderInstructions.json`
+- **XML Parser** (`src/xmlParser.py`) — convert pre-parsed ADM data into LUSID scenes
 - **JSON Schema** (`schema/lusid_scene_v0.5.schema.json`) — formal schema definition
+
+**Zero external dependencies** — stdlib only (`json`, `dataclasses`, `warnings`, `pathlib`, `math`).
+** Currently reliant on xml dependency used in sonoPleth. 
 
 ## Quick Start
 
 ```python
-from src import parse_file, transcode_to_sonopleth, extract_metadata_sidecar
-import json
+from src import parse_file, adm_to_lusid_scene, write_lusid_scene
 
-# Parse a LUSID scene
+# Parse an existing LUSID scene
 scene = parse_file("tests/fixtures/sample_scene_v0.5.json")
 
 print(f"Frames: {scene.frame_count}")
-print(f"Audio groups: {scene.audio_object_groups()}")
+print(f"Audio object groups: {scene.audio_object_groups()}")
+print(f"Direct speaker groups: {scene.direct_speaker_groups()}")
 print(f"Has LFE: {scene.has_lfe()}")
-
-# Transcode to sonoPleth renderInstructions
-render = transcode_to_sonopleth(scene)
-with open("renderInstructions.json", "w") as f:
-    json.dump(render, f, indent=2)
-
-# Extract metadata sidecar (spectral_features, agent_state)
-sidecar = extract_metadata_sidecar(scene)
-with open("lusid_metadata.json", "w") as f:
-    json.dump(sidecar, f, indent=2)
 ```
 
-Or use the file-based convenience function:
+### Build a LUSID scene from ADM data
 
 ```python
-from src import transcode_file
+from src import adm_to_lusid_scene, write_lusid_scene
 
-transcode_file(
-    input_path="my_scene.json",
-    output_path="renderInstructions.json",
-    sidecar_path="lusid_metadata.json",
+# Pre-parsed ADM dicts (from sonoPleth's parser.py)
+scene = adm_to_lusid_scene(
+    object_data=objectData,
+    direct_speaker_data=directSpeakerData,
+    global_data=globalData,
+    contains_audio=containsAudio,
+)
+write_lusid_scene(scene, "processedData/stageForRender/scene.lusid.json")
+```
+
+Or use the convenience function that loads intermediate JSONs directly:
+
+```python
+from src.xmlParser import load_processed_data_and_build_scene
+
+scene = load_processed_data_and_build_scene(
+    processed_dir="processedData",
+    output_path="processedData/stageForRender/scene.lusid.json",
 )
 ```
 
@@ -51,7 +60,8 @@ transcode_file(
 
 | Type | ID Convention | Description |
 |------|--------------|-------------|
-| `audio_object` | `X.1` | Spatial audio source with `cart` [x,y,z] direction vector |
+| `direct_speaker` | `X.1` | Fixed bed channel with `cart`, `speakerLabel`, `channelID` |
+| `audio_object` | `X.1` | Spatial audio source with time-varying `cart` [x,y,z] |
 | `LFE` | `X.1` | Low-frequency effects — routed to subwoofers, not spatialized |
 | `spectral_features` | `X.2+` | Spectral analysis data (centroid, flux, bandwidth, etc.) |
 | `agent_state` | `X.2+` | AI/agent metadata (mood, intensity, etc.) |
@@ -61,17 +71,17 @@ transcode_file(
 - **X** = group number (logical grouping of related nodes)
 - **Y** = hierarchy level (1 = parent/primary, 2+ = child/metadata)
 
-Example: Group 1 has `1.1` (audio_object) + `1.2` (spectral_features). Group 3 has `3.1` (LFE).
+Groups 1–10: DirectSpeaker bed channels. Group 4: LFE (hardcoded). Groups 11+: Audio objects.
 
-## Transcoder Output
+### Source ↔ WAV File Mapping
 
-The transcoder converts LUSID frames → sonoPleth per-source keyframes:
+| Node ID | WAV File | Description |
+|---------|----------|-------------|
+| `1.1` | `1.1.wav` | DirectSpeaker (e.g., Left) |
+| `4.1` | `LFE.wav` | LFE (special naming) |
+| `11.1` | `11.1.wav` | Audio object |
 
-- `audio_object` nodes → `src_<group>` entries with `{time, cart}` keyframes
-- `LFE` nodes → single `"LFE": [{"time": 0.0}]` entry (no cart)
-- `spectral_features` / `agent_state` → stripped from render output, written to sidecar
-
-### sonoPleth Coordinate System
+## Coordinate System
 
 - `cart: [x, y, z]` — Cartesian direction vector
   - **x**: Left (−) / Right (+)
@@ -89,8 +99,6 @@ Specify via the top-level `timeUnit` field:
 | `"samples"` | `"samp"` | Sample indices (requires `sampleRate`) |
 | `"milliseconds"` | `"ms"` | Timestamps in milliseconds |
 
-The transcoder always outputs seconds regardless of input timeUnit.
-
 ## Validation
 
 The parser warns but continues on:
@@ -98,7 +106,7 @@ The parser warns but continues on:
 - Missing `version` (assumes `"0.5"`)
 - Unknown `timeUnit` (falls back to `"seconds"`)
 - Nodes with missing `id`, invalid `id` format, missing `type`, unknown `type`
-- `audio_object` with missing/invalid `cart` or NaN/Inf values
+- `audio_object`/`direct_speaker` with missing/invalid `cart` or NaN/Inf values
 - Duplicate node IDs within a frame (keeps last)
 - Unsorted frames (auto-sorted by time)
 
@@ -106,32 +114,38 @@ The parser warns but continues on:
 
 ```bash
 cd LUSID
-pip install pytest
-pytest tests/ -v
+python3 -m unittest discover -s tests -v
 ```
+
+70 tests covering data model, parser, xmlParser, validation, round-trips.
 
 ## File Structure
 
 ```
 LUSID/
 ├── schema/
-│   └── lusid_scene_v0.5.schema.json
+│   └── lusid_scene_v0.5.schema.json     # JSON Schema
 ├── src/
-│   ├── __init__.py
-│   ├── scene.py          # Data model
-│   ├── parser.py         # JSON loader + validator
-│   └── transcoder.py     # LUSID → sonoPleth conversion
+│   ├── __init__.py                       # Public API exports
+│   ├── scene.py                          # Data model (5 node types)
+│   ├── parser.py                         # LUSID JSON loader + validator
+│   ├── xmlParser.py                      # ADM dicts → LUSID scene
+│   └── old_schema/
+│       └── transcoder.py                 # OBSOLETE: LUSID → renderInstructions
 ├── tests/
 │   ├── fixtures/
 │   │   └── sample_scene_v0.5.json
-│   ├── test_parser.py
-│   └── test_transcoder.py
-├── transcoders/           # Existing format transcoders (ADM, AMBI, MPEGH)
-├── utils/                 # Utilities (OSC, parsing helpers)
-└── README.md
+│   ├── test_parser.py                    # Parser + data model tests (42)
+│   ├── test_xmlParser.py                 # xmlParser tests (28)
+│   └── old_schema/
+│       └── test_transcoder.py            # OBSOLETE
+└── internalDocs/
+    ├── AGENTS.md                         # Agent-level specification
+    ├── DEVELOPMENT.md                    # Development notes
+    └── conceptNotes.md                   # Original design notes
 ```
 
-## Spec Reference
+## See Also
 
-See `2-9-agentInfo.md` for the full LUSID Scene v0.5 specification.
-See `AGENTS.md` for agent-level integration instructions.
+- `internalDocs/AGENTS.md` — Agent-level integration instructions
+- `internalDocs/DEVELOPMENT.md` — Development notes and architecture

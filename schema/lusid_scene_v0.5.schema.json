@@ -62,7 +62,7 @@
         },
         "type": {
           "type": "string",
-          "enum": ["audio_object", "LFE", "spectral_features", "agent_state"],
+          "enum": ["audio_object", "direct_speaker", "LFE", "spectral_features", "agent_state"],
           "description": "Node type."
         }
       },
@@ -89,6 +89,35 @@
             },
             "required": ["id", "type", "cart"],
             "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "direct_speaker" } }
+          },
+          "then": {
+            "properties": {
+              "id": true,
+              "type": true,
+              "cart": {
+                "type": "array",
+                "items": { "type": "number" },
+                "minItems": 3,
+                "maxItems": 3,
+                "description": "Fixed Cartesian position [x, y, z] of the bed channel."
+              },
+              "speakerLabel": {
+                "type": "string",
+                "description": "Speaker label from ADM (e.g., 'RC_L', 'RC_Rss'). Informational only."
+              },
+              "channelID": {
+                "type": "string",
+                "description": "ADM audioChannelFormatID (e.g., 'AC_00011001'). Informational only."
+              }
+            },
+            "required": ["id", "type", "cart"],
+            "additionalProperties": false,
+            "description": "Fixed-position bed channel. Renderer treats as static audio_object."
           }
         },
         {

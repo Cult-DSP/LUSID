@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.scene import (
     AudioObjectNode,
+    DirectSpeakerNode,
     LFENode,
     SpectralFeaturesNode,
     AgentStateNode,
@@ -100,15 +101,39 @@ class TestNodeModels(unittest.TestCase):
         d = n.to_dict()
         self.assertEqual(d["mood"], "calm")
 
+    def test_direct_speaker_basics(self):
+        n = DirectSpeakerNode(id="1.1", cart=[-1.0, 1.0, 0.0], speakerLabel="RC_L", channelID="AC_00011001")
+        self.assertEqual(n.type, "direct_speaker")
+        self.assertEqual(n.group, 1)
+        self.assertEqual(n.hierarchy, 1)
+        self.assertEqual(n.speakerLabel, "RC_L")
+        self.assertEqual(n.channelID, "AC_00011001")
+
+    def test_direct_speaker_to_dict(self):
+        n = DirectSpeakerNode(id="2.1", cart=[1.0, 1.0, 0.0], speakerLabel="RC_R")
+        d = n.to_dict()
+        self.assertEqual(d["id"], "2.1")
+        self.assertEqual(d["type"], "direct_speaker")
+        self.assertEqual(d["cart"], [1.0, 1.0, 0.0])
+        self.assertEqual(d["speakerLabel"], "RC_R")
+        self.assertNotIn("channelID", d)  # empty string omitted
+
+    def test_direct_speaker_defaults(self):
+        n = DirectSpeakerNode(id="5.1", cart=[0.0, 0.0, 1.0])
+        self.assertEqual(n.speakerLabel, "")
+        self.assertEqual(n.channelID, "")
+
 
 class TestFrame(unittest.TestCase):
     def test_get_nodes_by_type(self):
         f = Frame(time=0.0, nodes=[
             AudioObjectNode(id="1.1", cart=[0, 1, 0]),
+            DirectSpeakerNode(id="5.1", cart=[-1, 1, 0], speakerLabel="RC_L"),
             LFENode(id="3.1"),
             AudioObjectNode(id="2.1", cart=[1, 0, 0]),
         ])
         self.assertEqual(len(f.get_nodes_by_type("audio_object")), 2)
+        self.assertEqual(len(f.get_nodes_by_type("direct_speaker")), 1)
         self.assertEqual(len(f.get_nodes_by_type("LFE")), 1)
         self.assertEqual(len(f.get_nodes_by_type("agent_state")), 0)
 
@@ -133,17 +158,19 @@ class TestLusidScene(unittest.TestCase):
     def test_scene_with_frames(self):
         s = LusidScene(frames=[
             Frame(time=0.0, nodes=[
-                AudioObjectNode(id="1.1", cart=[0, 1, 0]),
-                LFENode(id="3.1"),
+                DirectSpeakerNode(id="1.1", cart=[-1, 1, 0], speakerLabel="RC_L"),
+                AudioObjectNode(id="11.1", cart=[0, 1, 0]),
+                LFENode(id="4.1"),
             ]),
             Frame(time=2.0, nodes=[
-                AudioObjectNode(id="1.1", cart=[1, 0, 0]),
-                AudioObjectNode(id="2.1", cart=[0, 0, 1]),
+                AudioObjectNode(id="11.1", cart=[1, 0, 0]),
+                AudioObjectNode(id="12.1", cart=[0, 0, 1]),
             ]),
         ])
         self.assertEqual(s.duration, 2.0)
         self.assertEqual(s.frame_count, 2)
-        self.assertEqual(s.audio_object_groups(), [1, 2])
+        self.assertEqual(s.audio_object_groups(), [11, 12])
+        self.assertEqual(s.direct_speaker_groups(), [1])
         self.assertTrue(s.has_lfe())
 
 
@@ -330,6 +357,45 @@ class TestParserNodeValidation(unittest.TestCase):
         self.assertEqual(node.data["mood"], "calm")
         self.assertEqual(node.data["intensity"], 0.3)
 
+    def test_direct_speaker_parsed(self):
+        raw = {
+            "version": "0.5",
+            "frames": [{"time": 0.0, "nodes": [
+                {"id": "1.1", "type": "direct_speaker", "cart": [-1.0, 1.0, 0.0],
+                 "speakerLabel": "RC_L", "channelID": "AC_00011001"}
+            ]}]
+        }
+        scene = parse_dict(raw)
+        node = scene.frames[0].nodes[0]
+        self.assertIsInstance(node, DirectSpeakerNode)
+        self.assertEqual(node.cart, [-1.0, 1.0, 0.0])
+        self.assertEqual(node.speakerLabel, "RC_L")
+        self.assertEqual(node.channelID, "AC_00011001")
+
+    def test_direct_speaker_missing_cart_warns(self):
+        raw = {
+            "version": "0.5",
+            "frames": [{"time": 0.0, "nodes": [
+                {"id": "1.1", "type": "direct_speaker", "speakerLabel": "RC_L"}
+            ]}]
+        }
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            scene = parse_dict(raw)
+        self.assertEqual(scene.frames[0].nodes, [])
+
+    def test_direct_speaker_nan_cart_warns(self):
+        raw = {
+            "version": "0.5",
+            "frames": [{"time": 0.0, "nodes": [
+                {"id": "1.1", "type": "direct_speaker", "cart": [float("nan"), 1.0, 0.0]}
+            ]}]
+        }
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            scene = parse_dict(raw)
+        self.assertEqual(scene.frames[0].nodes, [])
+
 
 class TestParserFixture(unittest.TestCase):
     def test_sample_scene_loads(self):
@@ -338,7 +404,8 @@ class TestParserFixture(unittest.TestCase):
         self.assertEqual(scene.sample_rate, 48000)
         self.assertEqual(scene.time_unit, "seconds")
         self.assertEqual(scene.frame_count, 5)
-        self.assertEqual(scene.audio_object_groups(), [1, 2])
+        self.assertEqual(scene.audio_object_groups(), [11, 12])
+        self.assertEqual(scene.direct_speaker_groups(), [1, 2, 3])
         self.assertTrue(scene.has_lfe())
 
     def test_sample_scene_frames_sorted(self):
@@ -346,13 +413,24 @@ class TestParserFixture(unittest.TestCase):
         times = [f.time for f in scene.frames]
         self.assertEqual(times, sorted(times))
 
+    def test_sample_scene_first_frame_has_all_types(self):
+        """First frame has direct_speakers, LFE, audio_objects, and metadata nodes."""
+        scene = parse_file(SAMPLE_SCENE)
+        first = scene.frames[0]
+        self.assertEqual(len(first.get_nodes_by_type("direct_speaker")), 3)
+        self.assertEqual(len(first.get_nodes_by_type("LFE")), 1)
+        self.assertEqual(len(first.get_nodes_by_type("audio_object")), 2)
+        self.assertEqual(len(first.get_nodes_by_type("spectral_features")), 1)
+        self.assertEqual(len(first.get_nodes_by_type("agent_state")), 1)
+
     def test_sample_scene_last_frame_stripped(self):
-        """Last frame in fixture has no spectral/agent nodes — should still parse."""
+        """Last frame in fixture has only audio_object nodes — should still parse."""
         scene = parse_file(SAMPLE_SCENE)
         last = scene.frames[-1]
         self.assertEqual(len(last.get_nodes_by_type("audio_object")), 2)
         self.assertEqual(len(last.get_nodes_by_type("spectral_features")), 0)
         self.assertEqual(len(last.get_nodes_by_type("agent_state")), 0)
+        self.assertEqual(len(last.get_nodes_by_type("direct_speaker")), 0)
 
 
 if __name__ == "__main__":
