@@ -1,3 +1,5 @@
+# ARCHIVED: Two-step dict-based parser. Replaced by xml_etree_parser.py for single-step XML parsing. See LUSID/internalDocs/AGENTS.md#archival-plan
+
 """
 LUSID Scene v0.5 — ADM XML Parser
 

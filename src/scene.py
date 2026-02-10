@@ -286,3 +286,33 @@ class LusidScene:
         if self.metadata:
             d["metadata"] = self.metadata
         return d
+
+    def summary(self) -> None:
+        """Print a human-readable summary of the scene contents."""
+        print(f"LUSID Scene v{self.version}")
+        print(f"  Duration: {self.duration:.3f} {self.time_unit}")
+        if self.sample_rate:
+            print(f"  Sample Rate: {self.sample_rate} Hz")
+        print(f"  Frames: {self.frame_count}")
+        
+        # Count nodes by type across all frames
+        node_counts = {}
+        for frame in self.frames:
+            for node in frame.nodes:
+                node_type = type(node).__name__.replace('Node', '').lower()
+                node_counts[node_type] = node_counts.get(node_type, 0) + 1
+        
+        if node_counts:
+            print("  Nodes:")
+            for node_type, count in sorted(node_counts.items()):
+                print(f"    {node_type}: {count}")
+        
+        # Show group info
+        audio_groups = self.audio_object_groups()
+        ds_groups = self.direct_speaker_groups()
+        if audio_groups:
+            print(f"  Audio Object Groups: {audio_groups}")
+        if ds_groups:
+            print(f"  Direct Speaker Groups: {ds_groups}")
+        if self.has_lfe():
+            print("  LFE: present")

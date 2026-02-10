@@ -18,7 +18,7 @@
 
 ## Output Parity
 
-✅ Equivalent
+Equivalent
 
 ## Analysis
 

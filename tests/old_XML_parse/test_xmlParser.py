@@ -1,3 +1,5 @@
+# ARCHIVED: Tests for old xmlParser.py. New tests in test_xml_etree_parser.py. See LUSID/internalDocs/AGENTS.md#archival-plan
+
 """
 Tests for LUSID Scene v0.5 — xmlParser (ADM dicts → LUSID scene)
 stdlib only — no external dependencies

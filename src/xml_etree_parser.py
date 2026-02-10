@@ -21,6 +21,7 @@ TODO (future):
 """
 
 from __future__ import annotations
+import json
 import warnings
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -455,8 +456,44 @@ def parse_and_write_lusid_scene(
     -------
     LusidScene
     """
-    from .xmlParser import write_lusid_scene
-
     scene = parse_adm_xml_to_lusid_scene(xml_path, contains_audio)
     write_lusid_scene(scene, output_path)
     return scene
+
+
+def write_lusid_scene(
+    scene: LusidScene,
+    output_path: Union[str, Path],
+) -> Path:
+    """
+    Serialize a LusidScene to JSON file.
+
+    Parameters
+    ----------
+    scene : LusidScene
+        The scene to write.
+    output_path : str or Path
+        Output file path.
+
+    Returns
+    -------
+    Path
+        The resolved output path.
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(output_path, "w") as f:
+        json.dump(scene.to_dict(), f, indent=2)
+
+    # Summary
+    num_audio = len(scene.audio_object_groups())
+    num_ds = len(scene.direct_speaker_groups())
+    has_lfe = scene.has_lfe()
+    print(f"✓ Wrote LUSID scene: {output_path}")
+    print(f"  {num_ds} direct_speaker, {num_audio} audio_object, "
+          f"LFE={'yes' if has_lfe else 'no'}, "
+          f"sampleRate={scene.sample_rate}, "
+          f"{scene.frame_count} frames")
+
+    return output_path

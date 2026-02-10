@@ -210,7 +210,7 @@ spatial_engine/src/
 
 ### Python Virtual Environment
 
-The sonoPleth project uses a Python virtual environment at `sonoPleth/bin/`. When running commands from the project root, use `python` (not `python3`) to use the venv Python with all dependencies (including `lxml`, `soundfile`, etc.):
+**Important:** The sonoPleth project uses a Python virtual environment located at the **project root** (`sonoPleth/bin/`). Always use `python` (not `python3`) when running commands from the project root to ensure you're using the venv Python with all dependencies (including `lxml`, `soundfile`, etc.):
 
 ```bash
 # From sonoPleth project root:
@@ -336,12 +336,14 @@ Tested with `SWALE-ATMOS-LFE.wav` → translab layout:
 ### What Was Done This Session
 
 **Eliminate intermediate JSON files:**
+
 - `src/analyzeADM/parser.py` — `parseMetadata()` returns `{'objectData', 'globalData', 'directSpeakerData'}` dict; `getGlobalData()` / `getDirectSpeakerData()` accept `outputPath=None`
 - `src/packageADM/packageForRender.py` — accepts `parsed_adm_data` and `contains_audio_data` dicts directly, calls `adm_to_lusid_scene()` in memory
 - `runPipeline.py` — dicts flow: `channelHasAudio()` → `parseMetadata()` → `packageForRender()` with no JSON intermediates
 - `runGUI.py` — same dict-based flow
 
 **xml.etree.ElementTree parser (stdlib, zero dependencies):**
+
 - `LUSID/src/xml_etree_parser.py` — `parse_adm_xml_to_lusid_scene(xml_path)` end-to-end XML → LUSID scene
   - Handles both bwfmetaedit conformance-point XML and standalone EBU ADM XML
   - Extracts `<Technical>` global data, DirectSpeakers, Objects, LFE
@@ -351,12 +353,14 @@ Tested with `SWALE-ATMOS-LFE.wav` → translab layout:
 - `LUSID/tests/benchmark_xml_parsers.py` — performance comparison script
 
 **Benchmark results (25.1 MB XML, 5348 frames, 56 objects):**
+
 - etree: 547 ms parse, 175 MB peak memory
 - lxml (old two-step): 1253 ms parse, 32 MB peak memory
 - etree is 2.3x faster, 5.5x more memory — acceptable trade-off
 - Output parity confirmed ✅
 
 **Documentation:**
+
 - `LUSID/internalDocs/xml_benchmark.md` — full benchmark report
 - `LUSID/internalDocs/AGENTS.md` — this file, updated with venv note and session results
 
@@ -509,21 +513,84 @@ As part of the XML parsing optimization, we're migrating from the two-step lxml 
 
 ### Files to Archive
 
-| Original Location | Archive Location | Reason | Header Comment |
-|-------------------|------------------|--------|----------------|
-| `LUSID/src/xmlParser.py` | `LUSID/src/old_XML_parse/xmlParser.py` | Replaced by `xml_etree_parser.py` (single-step XML→LUSID) | `# ARCHIVED: Two-step dict-based parser. Replaced by xml_etree_parser.py for single-step XML parsing. See LUSID/internalDocs/AGENTS.md#archival-plan` |
-| `LUSID/tests/test_xmlParser.py` | `LUSID/tests/old_XML_parse/test_xmlParser.py` | Tests for obsolete dict-based parser | `# ARCHIVED: Tests for old xmlParser.py. New tests in test_xml_etree_parser.py. See LUSID/internalDocs/AGENTS.md#archival-plan` |
-| `src/analyzeADM/parser.py` (modified) | `src/analyzeADM/old_XML_parse/parser.py` | lxml-based parsing functions replaced by stdlib | `# ARCHIVED: lxml parseMetadata() replaced by xml_etree_parser.parse_adm_xml_to_lusid_scene(). See LUSID/internalDocs/AGENTS.md#archival-plan` |
-| `src/packageADM/packageForRender.py` (modified) | `src/packageADM/old_XML_parse/packageForRender.py` | Dict-passing version replaced by direct XML | `# ARCHIVED: Dict intermediary eliminated. Now calls xml_etree_parser directly. See LUSID/internalDocs/AGENTS.md#archival-plan` |
-| `runPipeline.py` (modified) | `old_XML_parse/runPipeline.py` | JSON I/O eliminated, dicts flow in memory | `# ARCHIVED: Intermediate JSON files removed. Pipeline now XML→LUSID directly. See LUSID/internalDocs/AGENTS.md#archival-plan` |
-| `runGUI.py` (modified) | `old_XML_parse/runGUI.py` | Same pipeline changes as runPipeline.py | `# ARCHIVED: GUI pipeline updated to match runPipeline.py changes. See LUSID/internalDocs/AGENTS.md#archival-plan` |
+| Original Location                               | Archive Location                                   | Reason                                                    | Header Comment                                                                                                                                        |
+| ----------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LUSID/src/xmlParser.py`                        | `LUSID/src/old_XML_parse/xmlParser.py`             | Replaced by `xml_etree_parser.py` (single-step XML→LUSID) | `# ARCHIVED: Two-step dict-based parser. Replaced by xml_etree_parser.py for single-step XML parsing. See LUSID/internalDocs/AGENTS.md#archival-plan` |
+| `LUSID/tests/test_xmlParser.py`                 | `LUSID/tests/old_XML_parse/test_xmlParser.py`      | Tests for obsolete dict-based parser                      | `# ARCHIVED: Tests for old xmlParser.py. New tests in test_xml_etree_parser.py. See LUSID/internalDocs/AGENTS.md#archival-plan`                       |
+| `src/analyzeADM/parser.py` (modified)           | `src/analyzeADM/old_XML_parse/parser.py`           | lxml-based parsing functions replaced by stdlib           | `# ARCHIVED: lxml parseMetadata() replaced by xml_etree_parser.parse_adm_xml_to_lusid_scene(). See LUSID/internalDocs/AGENTS.md#archival-plan`        |
+| `src/packageADM/packageForRender.py` (modified) | `src/packageADM/old_XML_parse/packageForRender.py` | Dict-passing version replaced by direct XML               | `# ARCHIVED: Dict intermediary eliminated. Now calls xml_etree_parser directly. See LUSID/internalDocs/AGENTS.md#archival-plan`                       |
+| `runPipeline.py` (modified)                     | `old_XML_parse/runPipeline.py`                     | JSON I/O eliminated, dicts flow in memory                 | `# ARCHIVED: Intermediate JSON files removed. Pipeline now XML→LUSID directly. See LUSID/internalDocs/AGENTS.md#archival-plan`                        |
+| `runGUI.py` (modified)                          | `old_XML_parse/runGUI.py`                          | Same pipeline changes as runPipeline.py                   | `# ARCHIVED: GUI pipeline updated to match runPipeline.py changes. See LUSID/internalDocs/AGENTS.md#archival-plan`                                    |
 
-### Integration Status
+### Integration Status & Implementation Plan
+
+#### ✅ **Completed Tasks**
 
 - ✅ **Created** `xml_etree_parser.py` (stdlib XML parser)
 - ✅ **Benchmarked** vs lxml (2.3x faster, output parity confirmed)
 - ✅ **Added tests** (36 new tests, 106 total passing)
 - ✅ **Updated pipeline** to pass dicts in memory (no JSON I/O)
-- 🔄 **Next:** Archive old files, integrate `xml_etree_parser` into main pipeline
-- 🔄 **Next:** Create `LusidScene.summary()` debug method
-- 🔄 **Next:** Evaluate full `lxml` removal from sonoPleth venv
+- ✅ **Documented archival plan** with detailed procedures
+- ✅ **Task 1: Archive obsolete XML parsing files** - Moved `xmlParser.py` and `test_xmlParser.py` to `old_XML_parse/` with headers, updated `__init__.py`, all 78 tests pass
+- ✅ **Task 2: Integrate xml_etree_parser into Main Pipeline** - Modified `runPipeline.py` and `runGUI.py` to use single-step XML→LUSID, updated `packageForRender.py` to accept `LusidScene` objects directly, all tests pass
+- ✅ **Task 3: Create LusidScene Summary Debug Method** - Added `summary()` method to `LusidScene` class, integrated into `runPipeline.py` and `runGUI.py`, tested with real ADM data
+- ✅ **Task 4: Update splitStems for In-Memory Dicts** - Modified `splitChannelsToMono()` to accept optional `contains_audio_data` parameter, updated `packageForRender.py` to pass data directly, maintains backward compatibility
+- ✅ **Task 5: Evaluate Full lxml Removal** - No remaining lxml imports in active codebase, `src/analyzeADM/parser.py` archived, `lxml` can be removed from `requirements.txt`
+
+## ✅ **XML Parser Migration Complete**
+
+**Migration Summary:**
+- **Performance**: 2.3x faster XML parsing with stdlib `xml.etree.ElementTree`
+- **Memory**: 5.5x more memory usage (acceptable for ADM XML ≤100MB)
+- **Dependencies**: Eliminated `lxml` dependency from active codebase
+- **Architecture**: Single-step XML→LUSID pipeline (no intermediate JSONs/dicts)
+- **Testing**: All 78 LUSID tests pass, output parity confirmed
+- **Archival**: Obsolete files preserved in `old_XML_parse/` subdirectories
+
+**Files Archived:**
+- `LUSID/src/xmlParser.py` → `LUSID/src/old_XML_parse/xmlParser.py`
+- `LUSID/tests/test_xmlParser.py` → `LUSID/tests/old_XML_parse/test_xmlParser.py`
+- `src/analyzeADM/parser.py` → `src/analyzeADM/old_XML_parse/parser.py`
+
+**Next Steps:**
+- Consider removing `lxml` from `requirements.txt` (tested: no active usage)
+- Reorganize LUSID directory structure if desired
+- Performance optimizations for large scenes (1000+ frames)
+
+- Create `LUSID/src/old_XML_parse/` and `LUSID/tests/old_XML_parse/` directories
+- Move `xmlParser.py` and `test_xmlParser.py` with header comments
+- Update `LUSID/src/__init__.py` to remove old exports
+- Run full test suite (106 tests) to ensure no regressions
+
+**Task 2: Integrate xml_etree_parser into Main Pipeline (30 min)**
+
+- Modify `runPipeline.py`: Replace `parseMetadata()` → `xml_etree_parser.parse_adm_xml_to_lusid_scene()`
+- Modify `packageForRender.py`: Accept `LusidScene` object directly instead of dicts
+- Test end-to-end pipeline produces identical `scene.lusid.json`
+
+**Task 3: Create LusidScene Summary Debug Method (20 min)**
+
+- Add `summary()` method to `LusidScene` class in `scene.py`
+- Print version, sampleRate, timeUnit, frame count, node counts by type
+- Update `runPipeline.py` to call `scene.summary()` instead of old printSummary
+
+**Task 4: Update splitStems for In-Memory Dicts (25 min)**
+
+- Modify `splitChannelsToMono()` to accept `contains_audio_data` parameter
+- Update `mapEmptyChannels()` for in-memory dict format
+- Pass dict from `runPipeline.py` → `packageForRender.py` → `splitStems.py`
+- Maintain backward compatibility (read JSON if dict not provided)
+
+**Task 5: Evaluate Full lxml Removal (10 min)**
+
+- Search codebase for remaining `lxml` imports/usages
+- Check if other components still depend on lxml
+- Document lxml removal in requirements if safe
+- Test pipeline works after potential removal
+
+#### 📋 **Risk Assessment & Safety**
+
+- **Low Risk**: All changes maintain backward compatibility, comprehensive tests
+- **Safety**: Run test suite after each task, keep archived files for rollback
+- **Validation**: Output parity confirmed at each step, git tracking for changes
+- **Timeline**: ~1.5-2 hours total implementation time

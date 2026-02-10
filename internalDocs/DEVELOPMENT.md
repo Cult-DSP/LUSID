@@ -56,11 +56,11 @@ ADM WAV ─► bwfmetaedit ─► XML ─► sonoPleth parser.py ─► intermed
 
 ### Components to Archive (XML Migration)
 
-| Component             | Current Location           | Archive Location                        | Reason                                              |
-| --------------------- | -------------------------- | --------------------------------------- | --------------------------------------------------- |
-| `xmlParser.py`        | `src/xmlParser.py`         | `src/old_XML_parse/xmlParser.py`        | Replaced by `xml_etree_parser.py` (single-step)     |
-| `test_xmlParser.py`   | `tests/test_xmlParser.py`  | `tests/old_XML_parse/test_xmlParser.py` | Tests for obsolete dict-based parser                |
-| Modified pipeline files | `src/analyzeADM/`, `src/packageADM/`, root | `old_XML_parse/` subdirs          | Dict intermediaries eliminated, JSON I/O removed    |
+| Component               | Current Location                           | Archive Location                        | Reason                                           |
+| ----------------------- | ------------------------------------------ | --------------------------------------- | ------------------------------------------------ |
+| `xmlParser.py`          | `src/xmlParser.py`                         | `src/old_XML_parse/xmlParser.py`        | Replaced by `xml_etree_parser.py` (single-step)  |
+| `test_xmlParser.py`     | `tests/test_xmlParser.py`                  | `tests/old_XML_parse/test_xmlParser.py` | Tests for obsolete dict-based parser             |
+| Modified pipeline files | `src/analyzeADM/`, `src/packageADM/`, root | `old_XML_parse/` subdirs                | Dict intermediaries eliminated, JSON I/O removed |
 
 ### Design Principles
 
