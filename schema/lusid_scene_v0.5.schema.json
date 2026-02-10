@@ -62,7 +62,13 @@
         },
         "type": {
           "type": "string",
-          "enum": ["audio_object", "direct_speaker", "LFE", "spectral_features", "agent_state"],
+          "enum": [
+            "audio_object",
+            "direct_speaker",
+            "LFE",
+            "spectral_features",
+            "agent_state"
+          ],
           "description": "Node type."
         }
       },
@@ -142,9 +148,18 @@
             "properties": {
               "id": true,
               "type": true,
-              "centroid": { "type": "number", "description": "Spectral centroid in Hz." },
-              "flux": { "type": "number", "description": "Spectral flux (0.0–1.0)." },
-              "bandwidth": { "type": "number", "description": "Spectral bandwidth in Hz." }
+              "centroid": {
+                "type": "number",
+                "description": "Spectral centroid in Hz."
+              },
+              "flux": {
+                "type": "number",
+                "description": "Spectral flux (0.0–1.0)."
+              },
+              "bandwidth": {
+                "type": "number",
+                "description": "Spectral bandwidth in Hz."
+              }
             },
             "required": ["id", "type"],
             "additionalProperties": true,

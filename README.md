@@ -14,7 +14,7 @@ This package provides:
 - **JSON Schema** (`schema/lusid_scene_v0.5.schema.json`) — formal schema definition
 
 **Zero external dependencies** — stdlib only (`json`, `dataclasses`, `warnings`, `pathlib`, `math`).
-** Currently reliant on xml dependency used in sonoPleth. 
+\*\* Currently reliant on xml dependency used in sonoPleth.
 
 ## Quick Start
 
@@ -58,13 +58,13 @@ scene = load_processed_data_and_build_scene(
 
 ## Node Types
 
-| Type | ID Convention | Description |
-|------|--------------|-------------|
-| `direct_speaker` | `X.1` | Fixed bed channel with `cart`, `speakerLabel`, `channelID` |
-| `audio_object` | `X.1` | Spatial audio source with time-varying `cart` [x,y,z] |
-| `LFE` | `X.1` | Low-frequency effects — routed to subwoofers, not spatialized |
-| `spectral_features` | `X.2+` | Spectral analysis data (centroid, flux, bandwidth, etc.) |
-| `agent_state` | `X.2+` | AI/agent metadata (mood, intensity, etc.) |
+| Type                | ID Convention | Description                                                   |
+| ------------------- | ------------- | ------------------------------------------------------------- |
+| `direct_speaker`    | `X.1`         | Fixed bed channel with `cart`, `speakerLabel`, `channelID`    |
+| `audio_object`      | `X.1`         | Spatial audio source with time-varying `cart` [x,y,z]         |
+| `LFE`               | `X.1`         | Low-frequency effects — routed to subwoofers, not spatialized |
+| `spectral_features` | `X.2+`        | Spectral analysis data (centroid, flux, bandwidth, etc.)      |
+| `agent_state`       | `X.2+`        | AI/agent metadata (mood, intensity, etc.)                     |
 
 ### Node ID Convention (`X.Y`)
 
@@ -75,11 +75,11 @@ Groups 1–10: DirectSpeaker bed channels. Group 4: LFE (hardcoded). Groups 11+:
 
 ### Source ↔ WAV File Mapping
 
-| Node ID | WAV File | Description |
-|---------|----------|-------------|
-| `1.1` | `1.1.wav` | DirectSpeaker (e.g., Left) |
-| `4.1` | `LFE.wav` | LFE (special naming) |
-| `11.1` | `11.1.wav` | Audio object |
+| Node ID | WAV File   | Description                |
+| ------- | ---------- | -------------------------- |
+| `1.1`   | `1.1.wav`  | DirectSpeaker (e.g., Left) |
+| `4.1`   | `LFE.wav`  | LFE (special naming)       |
+| `11.1`  | `11.1.wav` | Audio object               |
 
 ## Coordinate System
 
@@ -93,11 +93,11 @@ Groups 1–10: DirectSpeaker bed channels. Group 4: LFE (hardcoded). Groups 11+:
 
 Specify via the top-level `timeUnit` field:
 
-| Value | Aliases | Description |
-|-------|---------|-------------|
-| `"seconds"` | `"s"` | Default. Timestamps in seconds |
-| `"samples"` | `"samp"` | Sample indices (requires `sampleRate`) |
-| `"milliseconds"` | `"ms"` | Timestamps in milliseconds |
+| Value            | Aliases  | Description                            |
+| ---------------- | -------- | -------------------------------------- |
+| `"seconds"`      | `"s"`    | Default. Timestamps in seconds         |
+| `"samples"`      | `"samp"` | Sample indices (requires `sampleRate`) |
+| `"milliseconds"` | `"ms"`   | Timestamps in milliseconds             |
 
 ## Validation
 
