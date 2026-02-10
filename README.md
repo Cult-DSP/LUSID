@@ -10,7 +10,7 @@ This package provides:
 
 - **Data model** (`src/scene.py`) — dataclasses for `LusidScene`, `Frame`, and 5 node types
 - **Parser** (`src/parser.py`) — load and validate LUSID JSON files with graceful fallback
-- **XML Parser** (`src/xmlParser.py`) — convert pre-parsed ADM data into LUSID scenes
+- **XML Parser** (`src/xml_etree_parser.py`) — parse ADM XML directly into LUSID scenes (stdlib only)
 - **JSON Schema** (`schema/lusid_scene_v0.5.schema.json`) — formal schema definition
 
 **Zero external dependencies** — stdlib only (`json`, `dataclasses`, `warnings`, `pathlib`, `math`).
@@ -129,14 +129,14 @@ LUSID/
 │   ├── __init__.py                       # Public API exports
 │   ├── scene.py                          # Data model (5 node types)
 │   ├── parser.py                         # LUSID JSON loader + validator
-│   ├── xmlParser.py                      # ADM dicts → LUSID scene
+│   ├── xml_etree_parser.py               # ADM XML → LUSID scene (stdlib)
 │   └── old_schema/
 │       └── transcoder.py                 # OBSOLETE: LUSID → renderInstructions
 ├── tests/
 │   ├── fixtures/
 │   │   └── sample_scene_v0.5.json
 │   ├── test_parser.py                    # Parser + data model tests (42)
-│   ├── test_xmlParser.py                 # xmlParser tests (28)
+│   ├── test_xml_etree_parser.py           # XML parser tests (36)
 │   └── old_schema/
 │       └── test_transcoder.py            # OBSOLETE
 └── internalDocs/

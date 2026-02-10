@@ -20,8 +20,8 @@ ADM WAV file
     └─► sonoPleth parser.py → objectData.json, directSpeakerData.json, globalData.json
                                         │
                                         ▼
-                              LUSID/src/xmlParser.py
-                              (accepts parsed ADM dicts, outputs LUSID scene)
+                              LUSID/src/xml_etree_parser.py
+                              (parses ADM XML directly, outputs LUSID scene)
                                         │
                                         ▼
                           processedData/stageForRender/scene.lusid.json
@@ -69,7 +69,7 @@ Low-frequency effects — routed directly to subwoofers, not spatialized.
 - **Fields:** `id`, `type`
 - **ID convention:** `X.1`
 - **Renderer behavior:** Bypass spatialization, route to subwoofer channels
-- **⚠️ DEV FLAG:** LFE is currently detected by hardcoded channel index (4th DirectSpeaker). Future update should detect by `speakerLabel` containing "LFE". See `_DEV_LFE_HARDCODED` flag in `xmlParser.py`.
+- **⚠️ DEV FLAG:** LFE is currently detected by hardcoded channel index (4th DirectSpeaker). Future update should detect by `speakerLabel` containing "LFE". See `_DEV_LFE_HARDCODED` flag in `xml_etree_parser.py`.
 
 ### `spectral_features` (type: `"spectral_features"`)
 
@@ -196,7 +196,7 @@ spatial_engine/src/old_schema_loader/
 LUSID/src/
     scene.py                   # Updated: + DirectSpeakerNode
     parser.py                  # Updated: + direct_speaker parsing
-    xmlParser.py               # NEW: ADM data → LUSID scene
+    xml_etree_parser.py          # NEW: ADM XML → LUSID scene (direct parsing)
     __init__.py                # Updated: exports xmlParser + DirectSpeakerNode
 
 spatial_engine/src/
@@ -218,7 +218,7 @@ python LUSID/tests/benchmark_xml_parsers.py   # ✅ uses venv
 python3 LUSID/tests/benchmark_xml_parsers.py  # ❌ uses system Python, missing lxml
 ```
 
-### `_DEV_LFE_HARDCODED` (in xmlParser.py)
+### `_DEV_LFE_HARDCODED` (in xml_etree_parser.py)
 
 LFE detection currently uses hardcoded index (4th DirectSpeaker channel). Set this flag to `False` when implementing speaker-label-based detection (`"LFE" in speakerLabel`).
 
@@ -231,13 +231,13 @@ LFE detection currently uses hardcoded index (4th DirectSpeaker channel). Set th
 - **2.3x faster** than the old lxml two-step pipeline (547 ms vs 1253 ms on 25 MB XML)
 - **5.5x more memory** (175 MB vs 32 MB) — acceptable for typical ADM files
 - **Output parity** — produces identical LUSID scenes
-- The old dict-based `xmlParser.py` + `adm_to_lusid_scene()` path remains for backward compatibility
+- The old dict-based `xmlParser.py` + `adm_to_lusid_scene()` path has been archived in `old_XML_parse/` for reference
 
 ### Intermediate Data Files — ✅ ELIMINATED (2026-02-10)
 
 The pipeline no longer writes `objectData.json`, `directSpeakerData.json`, or `globalData.json` as intermediate files. Parsed dicts flow directly in memory from `parseMetadata()` → `packageForRender()` → `adm_to_lusid_scene()`. The `containsAudio.json` is still written to disk (consumed by `splitStems.py`).
 
-`load_processed_data_and_build_scene()` remains in `xmlParser.py` for backward compatibility but is no longer used by the main pipeline.
+`load_processed_data_and_build_scene()` is archived in `old_XML_parse/xmlParser.py` and is no longer used by the main pipeline.
 
 **TODO:** Create a debug/print summary function that works from the `LusidScene` object directly, replacing the old `analyzeMetadata.printSummary()` which required `objectData.json` on disk.
 
@@ -275,11 +275,11 @@ cd sonoPleth_root && python LUSID/tests/benchmark_xml_parsers.py
 
 - `DirectSpeakerNode` added to `scene.py` (type=`direct_speaker`, cart, speakerLabel, channelID)
 - `parser.py` updated with `_parse_direct_speaker()` + validation (missing/NaN cart)
-- `xmlParser.py` created — `adm_to_lusid_scene()` converts ADM dicts → LUSID scene
+- `xml_etree_parser.py` created — `parse_adm_xml_to_lusid_scene()` parses ADM XML directly → LUSID scene
 - `__init__.py` exports updated (transcoder → xmlParser)
 - JSON schema updated with `direct_speaker` type
 - `test_parser.py` — 42 tests (DirectSpeaker model, parsing, fixture)
-- `test_xmlParser.py` — 28 tests (timecodes, LFE, mixed scenes, silent channels, round-trip, file I/O)
+- `test_xml_etree_parser.py` — 36 tests (timecodes, LFE, mixed scenes, silent channels, round-trip, file I/O)
 - Test fixture rewritten with direct_speaker (groups 1-3), LFE (group 4), audio_objects (groups 11-12)
 
 **sonoPleth pipeline integration:**
@@ -386,7 +386,11 @@ Tested with `SWALE-ATMOS-LFE.wav` → translab layout:
 
 - [ ] **Wire `xml_etree_parser` into main pipeline** — Replace the sonoPleth `parseMetadata()` → LUSID `adm_to_lusid_scene()` two-step flow with a single call to `parse_adm_xml_to_lusid_scene()` in `packageForRender.py`. This makes the pipeline XML → LUSID scene in one step.
 
+- [ ] **Implement proper LFE detection** — Replace hardcoded channel index (4th DirectSpeaker) with speaker label matching (`"LFE" in speakerLabel`). Update `_DEV_LFE_HARDCODED` flag to `False` and implement label-based detection in `xml_etree_parser.py`.
+
 ### Future — Deferred
+
+- [ ] **Version bump to v0.6.0** — Reflect significant performance improvements (2.3x faster XML parsing, stdlib-only XML processing, eliminated intermediate JSON I/O) and architectural milestone (LUSID as canonical format)
 
 - [ ] **Reorganize LUSID transcoding** — Move all parsing and transcoding utilities into `LUSID/transcoding/` directory for better organization. Deferred until the current module structure causes actual friction. See proposed structure in "Detailed Analysis" section below.
 
@@ -417,7 +421,7 @@ Implemented Feb 10, 2026. See:
 ```
 LUSID/src/
     parser.py      # LUSID scene parsing
-    xmlParser.py   # ADM → LUSID conversion
+    xml_etree_parser.py   # ADM XML → LUSID conversion (direct parsing)
     scene.py       # Node models
 ```
 
@@ -540,6 +544,7 @@ As part of the XML parsing optimization, we're migrating from the two-step lxml 
 ## ✅ **XML Parser Migration Complete**
 
 **Migration Summary:**
+
 - **Performance**: 2.3x faster XML parsing with stdlib `xml.etree.ElementTree`
 - **Memory**: 5.5x more memory usage (acceptable for ADM XML ≤100MB)
 - **Dependencies**: Eliminated `lxml` dependency from active codebase
@@ -548,11 +553,13 @@ As part of the XML parsing optimization, we're migrating from the two-step lxml 
 - **Archival**: Obsolete files preserved in `old_XML_parse/` subdirectories
 
 **Files Archived:**
+
 - `LUSID/src/xmlParser.py` → `LUSID/src/old_XML_parse/xmlParser.py`
 - `LUSID/tests/test_xmlParser.py` → `LUSID/tests/old_XML_parse/test_xmlParser.py`
 - `src/analyzeADM/parser.py` → `src/analyzeADM/old_XML_parse/parser.py`
 
 **Next Steps:**
+
 - Consider removing `lxml` from `requirements.txt` (tested: no active usage)
 - Reorganize LUSID directory structure if desired
 - Performance optimizations for large scenes (1000+ frames)

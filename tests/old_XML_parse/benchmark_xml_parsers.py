@@ -1,3 +1,5 @@
+# ARCHIVED: Performance benchmark comparing old lxml two-step pipeline vs new stdlib xml.etree.ElementTree. Migration complete - etree is 2.3x faster. See LUSID/internalDocs/AGENTS.md#archival-plan
+
 """
 LUSID — XML Parser Benchmark: xml.etree.ElementTree vs lxml
 
