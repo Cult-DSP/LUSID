@@ -105,3 +105,71 @@ Each entry MUST include:
 
 **Migration notes**
 - none
+
+### 2026-02-11 — XML parser migration and intermediate JSON elimination
+**Summary**
+- Migrated ADM XML parsing from lxml to Python stdlib (xml.etree.ElementTree)
+- Eliminated intermediate JSON files (objectData.json, directSpeakerData.json, globalData.json)
+- Data flows as Python dicts in memory from parseMetadata() → adm_to_lusid_scene()
+- Added xml_etree_parser.py for single-step ADM XML → LUSID scene conversion
+- Performance: 2.3x faster, 5.5x more memory usage (acceptable for typical ADM files)
+
+**Why**
+- Reduce external dependencies (lxml no longer required for active LUSID code)
+- Simplify pipeline by eliminating disk I/O for intermediate dicts
+- Improve performance for large XML files
+
+**Compatibility**
+- Type: patch-safe
+- Schema version: 0.5.1 → 0.5.2
+
+**Flags**
+- Added/changed defaults: none
+
+**Required follow-up**
+- sonoPleth:
+  - Wire xml_etree_parser into main pipeline (replace lxml two-step with single stdlib step)
+  - Update packageForRender.py to call stdlib parser directly
+  - Test end-to-end equivalence with existing lxml pathway
+- SpatialSeed:
+  - No changes required (export unaffected)
+
+**Fixture impact**
+- no change
+
+**Migration notes**
+- lxml pathway preserved in old_XML_parse/ for fallback if needed
+
+### 2026-02-11 — LUSID package ingestion pipeline
+**Summary**
+- Added createFromLUSID.py script for direct ingestion of LUSID packages
+- Pipeline: LUSID package → C++ spatial renderer (reads LUSID scene directly)
+- Supports spatializers: DBAP, VBAP, LBAP
+- Includes optional render analysis PDF generation
+- Added importingLUSIDpackage.md spec defining package layout, audio resolution, validation rules
+
+**Why**
+- Enable sonoPleth to consume LUSID packages produced by SpatialSeed
+- Establish toolchain contract for cross-repo data flow
+- Provide CLI interface for LUSID-based workflows
+
+**Compatibility**
+- Type: patch-safe
+- Schema version: 0.5.2
+
+**Flags**
+- Added/changed defaults: none
+
+**Required follow-up**
+- sonoPleth:
+  - Integrate package validation per importingLUSIDpackage.md rules
+  - Test with golden fixture package
+- SpatialSeed:
+  - Ensure packages conform to importingLUSIDpackage.md spec
+  - Update package writer to include required files (scene.lusid.json, containsAudio.json, mir_summary.json)
+
+**Fixture impact**
+- no change (fixture to be created)
+
+**Migration notes**
+- Existing ADM BWF pipeline unchanged; LUSID package ingestion is additional capability
