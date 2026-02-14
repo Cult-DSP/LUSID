@@ -150,7 +150,8 @@ class TestFrame(unittest.TestCase):
 class TestLusidScene(unittest.TestCase):
     def test_empty_scene(self):
         s = LusidScene()
-        self.assertEqual(s.duration, 0.0)
+        self.assertEqual(s.calculated_duration, 0.0)
+        self.assertEqual(s.duration_seconds, 0.0)  # Should also be 0 when no explicit duration
         self.assertEqual(s.frame_count, 0)
         self.assertEqual(s.audio_object_groups(), [])
         self.assertFalse(s.has_lfe())
@@ -167,11 +168,25 @@ class TestLusidScene(unittest.TestCase):
                 AudioObjectNode(id="12.1", cart=[0, 0, 1]),
             ]),
         ])
-        self.assertEqual(s.duration, 2.0)
+        self.assertEqual(s.calculated_duration, 2.0)
+        self.assertEqual(s.duration_seconds, 2.0)  # Should use calculated when no explicit
         self.assertEqual(s.frame_count, 2)
         self.assertEqual(s.audio_object_groups(), [11, 12])
         self.assertEqual(s.direct_speaker_groups(), [1])
         self.assertTrue(s.has_lfe())
+
+    def test_explicit_duration(self):
+        """Test that explicit duration takes precedence over calculated duration."""
+        s = LusidScene(
+            duration=300.0,  # 5 minutes explicit
+            frames=[
+                Frame(time=0.0, nodes=[AudioObjectNode(id="11.1", cart=[0, 1, 0])]),
+                Frame(time=2.0, nodes=[AudioObjectNode(id="11.1", cart=[1, 0, 0])]),
+            ]
+        )
+        self.assertEqual(s.calculated_duration, 2.0)  # Calculated from frames
+        self.assertEqual(s.duration, 300.0)           # Explicit duration
+        self.assertEqual(s.duration_seconds, 300.0)  # Should use explicit
 
 
 # ---------------------------------------------------------------------------

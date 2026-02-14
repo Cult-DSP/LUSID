@@ -1,6 +1,6 @@
-## LUSID Agent Specification — Scene v0.5.1 → sonoPleth Renderer
+## LUSID Agent Specification — Scene v0.5.2 → sonoPleth Renderer
 
-**Updated:** 2026-02-10  
+**Updated:** 2026-02-13  
 **Author:** LUSID / sonoPleth Integration Team  
 **Purpose:** Agent-level instructions for implementing and maintaining the LUSID Scene pipeline. LUSID is now the **canonical scene format** — the C++ renderer reads LUSID directly. The old `renderInstructions.json` format is deprecated.
 
@@ -8,7 +8,7 @@
 
 ## Architecture Summary
 
-### New Pipeline (v0.5.1)
+### New Pipeline (v0.5.2)
 
 ```
 ADM WAV file
@@ -33,14 +33,11 @@ ADM WAV file
                               SpatialRenderer → multichannel WAV
 ```
 
-### What Changed from v0.5.0
+### What Changed from v0.5.1
 
-1. **LUSID is the final output** — no more `renderInstructions.json` intermediate
-2. **New node type: `direct_speaker`** — bed channels are now first-class LUSID nodes
-3. **C++ renderer reads LUSID natively** — `JSONLoader` parses LUSID frame/node structure
-4. **Node ID naming convention** — C++ uses `X.Y` node IDs, not `src_N` names
-5. **`transcoder.py` is obsolete** — moved to `src/old_schema/`
-6. **`createRenderInfo.py` is obsolete** — moved to `src/packageADM/old_schema/`
+1. **Duration field added** — `duration` field in LUSID scene ensures renderer uses authoritative ADM duration
+2. **Fixed truncated renders** — Prevents compositions from being cut short when keyframes end before ADM duration
+3. **ADM metadata preservation** — Duration extracted from ADM `<Duration>` field, not calculated from WAV lengths
 
 ---
 
@@ -89,13 +86,14 @@ AI/agent metadata attached to parent audio_object group.
 
 ---
 
-## 📄 LUSID Scene JSON Format (v0.5.1)
+## 📄 LUSID Scene JSON Format (v0.5.2)
 
 ```json
 {
   "version": "0.5",
   "sampleRate": 48000,
   "timeUnit": "seconds",
+  "duration": 566.0,
   "metadata": {
     "title": "Scene name",
     "sourceFormat": "ADM",
@@ -132,6 +130,15 @@ AI/agent metadata attached to parent audio_object group.
   ]
 }
 ```
+
+### Top-Level Fields
+
+- **version**: LUSID format version (currently "0.5")
+- **sampleRate**: Sample rate in Hz (must match audio files)
+- **timeUnit**: Time unit for keyframes: `"seconds"` (default), `"samples"`, or `"milliseconds"`
+- **duration**: **NEW in v0.5.2** - Total scene duration in seconds (from ADM metadata). Ensures renderer uses authoritative ADM duration instead of calculating from WAV file lengths.
+- **metadata**: Optional metadata object (source format, original duration string, etc.)
+- **frames**: Array of time-ordered frames containing spatial nodes
 
 ---
 
@@ -359,6 +366,17 @@ Tested with `SWALE-ATMOS-LFE.wav` → translab layout:
 - etree is 2.3x faster, 5.5x more memory — acceptable trade-off
 - Output parity confirmed ✅
 
+**Duration field implementation (v0.5.2):**
+
+- `LUSID/src/scene.py` — Added `duration: float = -1.0` to `LusidScene` dataclass
+- `LUSID/src/xml_etree_parser.py` — Extracts ADM `<Duration>` field (e.g., "00:09:26.000" → 566.0 seconds)
+- `LUSID/schema/lusid_scene_v0.5.schema.json` — Added optional `duration` field (number, minimum 0)
+- `spatial_engine/src/JSONLoader.hpp` — Added `double duration = -1.0` to `SpatialData` struct
+- `spatial_engine/src/JSONLoader.cpp` — Parses `duration` field from LUSID JSON
+- `spatial_engine/src/renderer/SpatialRenderer.cpp` — Prioritizes LUSID duration over WAV length calculation
+- `spatial_engine/src/vbap_src/VBAPRenderer.cpp` — Same duration logic as SpatialRenderer
+- Tested: 9:26 ADM composition now renders full 566 seconds instead of stopping at 2:47 (319 seconds)
+
 **Documentation:**
 
 - `LUSID/internalDocs/xml_benchmark.md` — full benchmark report
@@ -379,6 +397,8 @@ Tested with `SWALE-ATMOS-LFE.wav` → translab layout:
 - [x] **xml.etree.ElementTree migration** — Created `LUSID/src/xml_etree_parser.py` with `parse_adm_xml_to_lusid_scene()`. Stdlib-only, zero dependencies, 2.3x faster than old lxml two-step pipeline. 36 tests passing. Benchmarked in `xml_benchmark.md`. (Feb 10, 2026)
 
 - [x] **XML parser performance benchmarking** — Documented in `LUSID/internalDocs/xml_benchmark.md`. etree: 547ms/175MB, lxml: 1253ms/32MB on 25MB XML. Output parity confirmed. (Feb 10, 2026)
+
+- [x] **Duration field implementation** — Added `duration` field to LUSID scene schema, ADM duration extraction, C++ renderer updates to prioritize LUSID duration over WAV length. Prevents truncated renders. (Feb 13, 2026)
 
 ### Priority 1 — Ready for Implementation
 

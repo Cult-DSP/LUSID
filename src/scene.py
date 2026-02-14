@@ -219,6 +219,9 @@ class LusidScene:
     ----------
     version : str
         Schema version ("0.5").
+    duration : float or None
+        Total scene duration in seconds. Canonical source of truth for render duration.
+        Typically parsed from ADM Duration field when available.
     frames : list[Frame]
         Time-ordered scene snapshots.
     time_unit : str
@@ -229,6 +232,7 @@ class LusidScene:
         Optional top-level metadata (title, author, notes, etc.).
     """
     version: str = "0.5"
+    duration: Optional[float] = None
     frames: List[Frame] = field(default_factory=list)
     time_unit: str = "seconds"
     sample_rate: Optional[int] = None
@@ -237,16 +241,18 @@ class LusidScene:
     # -- Queries --
 
     @property
-    def duration(self) -> float:
-        """Duration in the scene's declared time unit (last frame time)."""
+    def calculated_duration(self) -> float:
+        """Duration calculated from last frame time in the scene's declared time unit."""
         if not self.frames:
             return 0.0
         return self.frames[-1].time
 
     @property
     def duration_seconds(self) -> float:
-        """Duration converted to seconds."""
-        return time_to_seconds(self.duration, self.time_unit, self.sample_rate)
+        """Duration converted to seconds. Uses explicit duration field if available, otherwise calculates from frames."""
+        if self.duration is not None:
+            return self.duration  # Already in seconds
+        return time_to_seconds(self.calculated_duration, self.time_unit, self.sample_rate)
 
     @property
     def frame_count(self) -> int:
@@ -281,6 +287,8 @@ class LusidScene:
             "timeUnit": self.time_unit,
             "frames": [f.to_dict() for f in self.frames],
         }
+        if self.duration is not None:
+            d["duration"] = self.duration
         if self.sample_rate is not None:
             d["sampleRate"] = self.sample_rate
         if self.metadata:
@@ -290,7 +298,10 @@ class LusidScene:
     def summary(self) -> None:
         """Print a human-readable summary of the scene contents."""
         print(f"LUSID Scene v{self.version}")
-        print(f"  Duration: {self.duration:.3f} {self.time_unit}")
+        if self.duration is not None:
+            print(f"  Duration: {self.duration:.3f} seconds (explicit)")
+        else:
+            print(f"  Duration: {self.calculated_duration:.3f} {self.time_unit} (calculated)")
         if self.sample_rate:
             print(f"  Sample Rate: {self.sample_rate} Hz")
         print(f"  Frames: {self.frame_count}")

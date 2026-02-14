@@ -272,6 +272,15 @@ def parse_dict(raw: Dict[str, Any]) -> LusidScene:
         else:
             sample_rate = int(sample_rate)
 
+    # -- duration --
+    duration = raw.get("duration")
+    if duration is not None:
+        if not isinstance(duration, (int, float)) or duration < 0:
+            _warn(f"Invalid duration={duration}, ignoring")
+            duration = None
+        else:
+            duration = float(duration)
+
     if time_unit == "samples" and sample_rate is None:
         _warn("timeUnit is 'samples' but no valid sampleRate provided. "
               "Time conversion to seconds will fail.")
@@ -305,6 +314,7 @@ def parse_dict(raw: Dict[str, Any]) -> LusidScene:
 
     return LusidScene(
         version=version,
+        duration=duration,
         frames=frames,
         time_unit=time_unit,
         sample_rate=sample_rate,

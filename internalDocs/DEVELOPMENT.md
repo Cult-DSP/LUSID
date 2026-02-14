@@ -1,4 +1,4 @@
-# LUSID Scene v0.5.1 — Development Notes
+# LUSID Scene v0.5.2 — Development Notes
 
 **Internal documentation for LUSID implementation**  
 **Last Updated:** February 9, 2026
@@ -7,7 +7,7 @@
 
 ## Implementation Summary
 
-LUSID Scene v0.5.1 is the **canonical scene format** for sonoPleth spatial audio rendering. The C++ renderer reads LUSID JSON directly — the old `renderInstructions.json` intermediate format is deprecated and moved to `old_schema/` directories.
+LUSID Scene v0.5.2 is the **canonical scene format** for sonoPleth spatial audio rendering. The C++ renderer reads LUSID JSON directly — the old `renderInstructions.json` intermediate format is deprecated and moved to `old_schema/` directories.
 
 **Status:** 70 tests, all passing, zero external dependencies. Python stdlib only (`json`, `dataclasses`, `warnings`, `pathlib`, `math`, `unittest`).
 
@@ -278,6 +278,14 @@ LUSID/
 - `xml_etree_parser.py` — Single-step XML → LUSID using stdlib only
 - Eliminated intermediate JSON files (dicts flow in memory)
 - Benchmark vs lxml: 2.3x faster, output parity confirmed
+
+✅ **Completed (Duration Preservation v0.5.2)**
+
+- `duration` field added to LUSID scene schema (optional float, seconds)
+- ADM `<Duration>` field extraction in `xml_etree_parser.py`
+- C++ `SpatialRenderer` and `VBAPRenderer` updated to prioritize LUSID duration over WAV length
+- Prevents truncated renders when keyframes end before ADM duration
+- Tested: 9:26 ADM composition now renders full duration instead of stopping at 2:47
 - Added 36 tests (106 total passing)
 - Updated pipeline to pass dicts directly (no JSON I/O)
 - Resolved XML dependency decision: stdlib `xml.etree.ElementTree`

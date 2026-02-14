@@ -11,6 +11,11 @@
       "const": "0.5",
       "description": "Schema version. Must be '0.5'."
     },
+    "duration": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total duration of the scene in seconds, typically parsed from ADM metadata. Used as the canonical source of truth for render duration."
+    },
     "sampleRate": {
       "type": "integer",
       "minimum": 1,

@@ -335,6 +335,14 @@ def parse_adm_xml_to_lusid_scene(
         if idx is not None:
             audio_map[idx] = has_audio
 
+    # -- Parse duration from ADM metadata --
+    duration_seconds: Optional[float] = None
+    if duration_str:
+        try:
+            duration_seconds = _parse_timecode_to_seconds(duration_str)
+        except Exception as e:
+            _warn(f"Could not parse duration '{duration_str}': {e}")
+
     # -- Metadata --
     metadata: Dict[str, Any] = {"sourceFormat": "ADM"}
     if duration_str:
@@ -422,6 +430,7 @@ def parse_adm_xml_to_lusid_scene(
 
     scene = LusidScene(
         version="0.5",
+        duration=duration_seconds,  # Set explicit duration from ADM
         frames=frames,
         time_unit="seconds",
         sample_rate=sample_rate,
