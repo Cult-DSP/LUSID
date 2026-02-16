@@ -307,15 +307,17 @@ LUSID/
 **Issue:** Although LUSID correctly exports duration from ADM metadata, the C++ renderer produces shortened output files when using the **allosphere speaker layout (56 channels)**, but renders correctly with the **translab config (18 channels)**.
 
 **Symptoms:**
+
 - LUSID scene correctly shows: `"duration": 566.0` ✅
-- Transl ab layout (18 chan): Renders full ADM duration ✅  
+- Transl ab layout (18 chan): Renders full ADM duration ✅
 - Allosphere layout (56 chan): Renders truncated duration ❌
 
 **Hypothesis:** Memory/buffer allocation issue in C++ renderer when handling high channel counts. Duration logic may be affected by speaker layout initialization or buffer sizing.
 
 **Investigation Required:**
+
 - Compare renderer logs between translab (18 chan) and allosphere (56 chan) layouts
-- Check memory allocation differences in `SpatialRenderer::init()` 
+- Check memory allocation differences in `SpatialRenderer::init()`
 - Verify duration calculation independence from speaker count
 - Test with intermediate channel counts (24, 32, 48) to find threshold
 - Examine buffer allocation in `VBAPRenderer` vs `SpatialRenderer`
