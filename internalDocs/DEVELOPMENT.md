@@ -263,7 +263,7 @@ LUSID/
 - Comprehensive test suite
 - JSON Schema for validation
 
-✅ **Completed (v0.5.1)**
+✅ **Completed (v0.5.2)**
 
 - `DirectSpeakerNode` type added to data model
 - `xmlParser.py` — ADM data → LUSID scene conversion
@@ -299,3 +299,23 @@ LUSID/
 - Evaluate full `lxml` removal from sonoPleth venv
 - Performance optimizations for large scenes
 - Additional node types (reverb_zone, interpolation hints, etc.)
+
+### ⚠️ Known Issues
+
+#### Duration Field — Speaker Layout Dependent Rendering (2026-02-16)
+
+**Issue:** Although LUSID correctly exports duration from ADM metadata, the C++ renderer produces shortened output files when using the **allosphere speaker layout (56 channels)**, but renders correctly with the **translab config (18 channels)**.
+
+**Symptoms:**
+- LUSID scene correctly shows: `"duration": 566.0` ✅
+- Transl ab layout (18 chan): Renders full ADM duration ✅  
+- Allosphere layout (56 chan): Renders truncated duration ❌
+
+**Hypothesis:** Memory/buffer allocation issue in C++ renderer when handling high channel counts. Duration logic may be affected by speaker layout initialization or buffer sizing.
+
+**Investigation Required:**
+- Compare renderer logs between translab (18 chan) and allosphere (56 chan) layouts
+- Check memory allocation differences in `SpatialRenderer::init()` 
+- Verify duration calculation independence from speaker count
+- Test with intermediate channel counts (24, 32, 48) to find threshold
+- Examine buffer allocation in `VBAPRenderer` vs `SpatialRenderer`

@@ -1,4 +1,4 @@
-# LUSID Scene v0.5 — sonoPleth Integration
+# LUSID Scene v0.5.2 — sonoPleth Integration
 
 Python implementation of the LUSID Scene v0.5 format: a time-sequenced node graph for spatial audio.
 

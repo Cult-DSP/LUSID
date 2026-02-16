@@ -33,7 +33,7 @@ ADM WAV file
                               SpatialRenderer → multichannel WAV
 ```
 
-### What Changed from v0.5.1
+### What Changed from v0.5.2
 
 1. **Duration field added** — `duration` field in LUSID scene ensures renderer uses authoritative ADM duration
 2. **Fixed truncated renders** — Prevents compositions from being cut short when keyframes end before ADM duration
@@ -248,6 +248,26 @@ The pipeline no longer writes `objectData.json`, `directSpeakerData.json`, or `g
 
 **TODO:** Create a debug/print summary function that works from the `LusidScene` object directly, replacing the old `analyzeMetadata.printSummary()` which required `objectData.json` on disk.
 
+### ⚠️ Duration Field Issue — Speaker Layout Dependent (2026-02-16)
+
+**Issue:** Although LUSID correctly exports duration (566 seconds from ADM metadata), the C++ renderer still produces shortened output files when using the **allosphere speaker layout (56 channels)**, but renders correctly with the **translab config (18 channels)**.
+
+**Symptoms:**
+- LUSID scene shows: `"duration": 566.0` ✅
+- Transl ab layout (18 chan): Renders full 566 seconds ✅  
+- Allosphere layout (56 chan): Renders truncated duration ❌
+
+**Hypothesis:** Memory/buffer allocation issue in C++ renderer when handling high channel counts (56 vs 18 speakers). Duration logic may be affected by speaker layout initialization or buffer sizing.
+
+**Status:** Documented for investigation. Do not investigate now — focus on core duration preservation logic first.
+
+**Investigation Context Window:**
+- Compare renderer output logs between translab (18 chan) and allosphere (56 chan) layouts
+- Check for memory allocation differences in `SpatialRenderer::init()` 
+- Verify duration calculation doesn't depend on speaker count
+- Test with intermediate channel counts (24, 32, 48) to find threshold
+- Examine buffer allocation in `VBAPRenderer` vs `SpatialRenderer`
+
 ---
 
 ## Testing
@@ -274,7 +294,7 @@ cd sonoPleth_root && python LUSID/tests/benchmark_xml_parsers.py
 
 ---
 
-## ✅ v0.5.1 Implementation Status (2026-02-09)
+## ✅ v0.5.2 Implementation Status (2026-02-13)
 
 ### What Was Done This Session
 
@@ -316,7 +336,7 @@ cd sonoPleth_root && python LUSID/tests/benchmark_xml_parsers.py
 
 - `LUSID/internalDocs/AGENTS.md` — this file
 - `LUSID/internalDocs/DEVELOPMENT.md` — full rewrite
-- `LUSID/README.md` — rewritten for v0.5.1
+- `LUSID/README.md` — rewritten for v0.5.2
 - `internalDocsMD/json_schema_info.md` — LUSID scene as primary, old format deprecated
 - `internalDocsMD/RENDERING.md` — examples updated to `scene.lusid.json`
 - `internalDocsMD/TODO.md` — stale references cleaned
