@@ -25,6 +25,10 @@ The canonical reference is:
 schema/lusid_scene_v1.0.schema.json
 ```
 
+## Agentic Development
+
+For using LUSID with an agent, start with AGENTS.md
+
 ## What This Repo Contains
 
 ```txt
