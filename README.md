@@ -1,69 +1,234 @@
-# LUSID Scene v0.5.2 — Specification
+# LUSID Scene v1.0
 
-LUSID defines a time-sequenced node graph for spatial audio scenes. This repository is **spec-only**: schema, documentation, and templates. Runtime tools live outside this repo.
+**Lightweight Universal Spatial Interaction Data**
 
-## Overview
+LUSID is a JSON scene specification for spatial audio metadata. It represents a scene as a time-sequenced set of frames, where each frame contains spatial nodes, fixed speaker nodes, low-frequency nodes, and optional metadata layers.
 
-LUSID Scene v0.5 represents spatial audio scenes as a timeline of **frames**, each containing **nodes** with hierarchical IDs (`X.Y`) and typed data. The canonical reference is the JSON schema in [schema/lusid_scene_v0.5.schema.json](schema/lusid_scene_v0.5.schema.json).
+This repository is **spec-only**. It contains the schema, documentation, and templates needed to generate or validate LUSID scenes. Runtime tools live outside this repo.
 
-## Scope
+## What LUSID Is
 
-- This repo provides the **specification** and templates only.
-- Do not add or document runtime behavior here.
-- Runtime tools should reference this spec, not be implemented within it.
+LUSID defines a portable scene contract for spatial audio systems.
+
+A LUSID scene can describe:
+
+- moving audio objects
+- fixed direct-speaker bed channels
+- LFE content
+- frame-based spatial position data
+- analysis metadata attached to scene nodes
+- agent or procedural state attached to scene nodes
+
+The canonical reference is:
+
+```txt
+schema/lusid_scene_v1.0.schema.json
+```
+
+## What This Repo Contains
+
+```txt
+LUSID/
+├── README.md
+├── AGENTS.md
+├── schema/
+│   └── lusid_scene_v1.0.schema.json
+└── internalDocs/
+    ├── INTERNAL_AGENTS.md
+    ├── DESIGNDOC.md
+    └── DEVELOPMENT.md
+```
+
+### Public Files
+
+- `README.md`  
+  Human-facing overview of the LUSID scene format.
+
+- `AGENTS.md`  
+  Agent-facing guide for using LUSID in another project.
+
+- `schema/lusid_scene_v1.0.schema.json`  
+  Canonical JSON Schema for LUSID Scene v1.0.
+
+### Internal Development Files
+
+- `internalDocs/INTERNAL_AGENTS.md`  
+  Maintainer-agent instructions for editing this repo safely.
+
+- `internalDocs/DESIGNDOC.md`  
+  Internal design rationale and format influences.
+
+- `internalDocs/DEVELOPMENT.md`  
+  Archival development history.
+
+The `internalDocs/` folder is development-facing. It is not required for consuming or generating LUSID scenes.
+
+## What This Repo Does Not Contain
+
+This repo does **not** provide:
+
+- audio playback
+- speaker layout mapping
+- spatial rendering
+- DBAP, VBAP, or other panning algorithms
+- ADM parsing
+- MPEG-H or IAMF parsing
+- file packaging tools
+- runtime interpolation behavior
+- loaders, parsers, CLIs, or application code
+
+Projects that use LUSID are responsible for their own runtime behavior.
+
+## Basic Scene Model
+
+A LUSID scene is a JSON object with:
+
+- a format version
+- optional sample rate
+- optional duration
+- optional metadata
+- a list of time-ordered frames
+
+Each frame contains a timestamp and a list of active nodes.
+
+Minimal structure:
+
+```json
+{
+  "version": "1.0",
+  "sampleRate": 48000,
+  "timeUnit": "seconds",
+  "frames": [
+    {
+      "time": 0.0,
+      "nodes": [
+        {
+          "id": "11.1",
+          "type": "audio_object",
+          "cart": [0.0, 1.0, 0.0]
+        }
+      ]
+    }
+  ]
+}
+```
 
 ## Node Types
 
-| Type                | ID Convention | Description                                                   |
-| ------------------- | ------------- | ------------------------------------------------------------- |
-| `direct_speaker`    | `X.1`         | Fixed bed channel with `cart`, `speakerLabel`, `channelID`    |
-| `audio_object`      | `X.1`         | Spatial audio source with time-varying `cart` [x,y,z]         |
-| `LFE`               | `X.1`         | Low-frequency effects — routed to subwoofers, not spatialized |
-| `spectral_features` | `X.2+`        | Spectral analysis data (centroid, flux, bandwidth, etc.)      |
-| `agent_state`       | `X.2+`        | AI/agent metadata (mood, intensity, etc.)                     |
+| Type | Description |
+| ---- | ----------- |
+| `audio_object` | Spatial audio source with Cartesian position |
+| `direct_speaker` | Fixed bed channel with optional speaker metadata |
+| `LFE` | Low-frequency effects node with no position |
+| `spectral_features` | Analysis metadata attached to a parent group |
+| `agent_state` | Agent or procedural metadata attached to a parent group |
 
-### Node ID Convention (`X.Y`)
+## Node ID Convention
 
-- **X** = group number (logical grouping of related nodes)
-- **Y** = hierarchy level (1 = parent/primary, 2+ = child/metadata)
+LUSID uses hierarchical node IDs in the form:
 
-Groups 1–10: DirectSpeaker bed channels. Group 4: LFE (conventional). Groups 11+: Audio objects.
+```txt
+X.Y
+```
 
-## Templates
+Where:
 
-Use [schema/lusid_scene_v0.5.schema.json](schema/lusid_scene_v0.5.schema.json) as the canonical template for generating scenes.
+- `X` is the group number
+- `Y` is the hierarchy level
+- `Y = 1` identifies the primary node in a group
+- `Y >= 2` identifies metadata or child nodes attached to that group
+
+Examples:
+
+```txt
+11.1    primary audio object in group 11
+11.2    metadata attached to group 11
+11.3    additional metadata attached to group 11
+```
+
+Recommended conventions:
+
+- groups `1-10`: direct-speaker bed channels
+- group `4`: conventional LFE group
+- groups `11+`: audio objects
+
+These conventions are intended to keep generated scenes predictable and readable.
 
 ## Coordinate System
 
-- `cart: [x, y, z]` — Cartesian direction vector
-  - **x**: Left (−) / Right (+)
-  - **y**: Back (−) / Front (+)
-  - **z**: Down (−) / Up (+)
-- Vectors are expected to be unit length
+Spatial nodes use Cartesian direction vectors:
+
+```json
+"cart": [x, y, z]
+```
+
+Coordinate meaning:
+
+| Axis | Meaning |
+| ---- | ------- |
+| `x` | left negative, right positive |
+| `y` | back negative, front positive |
+| `z` | down negative, up positive |
+
+Vectors are expected to be normalized direction vectors unless a consuming project explicitly defines another interpretation.
 
 ## Time Units
 
-Specify via the top-level `timeUnit` field:
+The top-level `timeUnit` field defines the unit used for all frame timestamps.
 
-| Value            | Aliases  | Description                            |
-| ---------------- | -------- | -------------------------------------- |
-| `"seconds"`      | `"s"`    | Default. Timestamps in seconds         |
-| `"samples"`      | `"samp"` | Sample indices (requires `sampleRate`) |
-| `"milliseconds"` | `"ms"`   | Timestamps in milliseconds             |
+Allowed values:
 
-## File Structure
+| Value | Alias | Meaning |
+| ----- | ----- | ------- |
+| `seconds` | `s` | timestamps are seconds |
+| `samples` | `samp` | timestamps are sample indices |
+| `milliseconds` | `ms` | timestamps are milliseconds |
 
+If `timeUnit` is `samples`, `sampleRate` should be provided.
+
+## Using LUSID in Another Project
+
+To use LUSID in another project:
+
+1. Reference or vendor the schema.
+2. Generate scene JSON that follows the schema.
+3. Validate generated scenes against the schema.
+4. Implement runtime interpretation in the consuming project.
+
+For coding agents or automated integrations, see:
+
+```txt
+AGENTS.md
 ```
-LUSID/
-├── schema/
-│   └── lusid_scene_v0.5.schema.json     # JSON Schema
-└── internalDocs/
-    ├── LUSID_AGENTS.md                   # Agent-level specification
-    ├── DEVELOPMENT.md                    # Archival history
-    └── conceptNotes.md                   # Original design notes
+
+## Validation
+
+Generated scenes should validate against:
+
+```txt
+schema/lusid_scene_v1.0.schema.json
 ```
 
-## See Also
+Validation should be treated as the source of truth for compatibility.
 
-- [internalDocs/LUSID_AGENTS.md](internalDocs/LUSID_AGENTS.md) — Spec-only agent guidance
-- [internalDocs/DEVELOPMENT.md](internalDocs/DEVELOPMENT.md) — Archival history
+## Design Principles
+
+LUSID is designed to be:
+
+- schema-first
+- human-readable
+- deterministic
+- implementation-agnostic
+- useful as a handoff format between tools
+- strict about playback-critical data
+- flexible for non-playback metadata
+
+## Development Notes
+
+Internal design rationale and historical development notes live in:
+
+```txt
+internalDocs/
+```
+
+These files are useful for maintainers but are not required for external projects that only need to generate or consume LUSID scenes.
