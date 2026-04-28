@@ -1,0 +1,154 @@
+{
+  "version": "0.5",
+  "timeUnit": "seconds",
+  "frames": [
+    {
+      "time": 0.0,
+      "nodes": [
+        {
+          "id": "1.1",
+          "type": "direct_speaker",
+          "cart": [
+            -1.0,
+            1.0,
+            0.0
+          ],
+          "speakerLabel": "RC_L",
+          "channelID": "AC_00011001"
+        },
+        {
+          "id": "2.1",
+          "type": "direct_speaker",
+          "cart": [
+            1.0,
+            1.0,
+            0.0
+          ],
+          "speakerLabel": "RC_R",
+          "channelID": "AC_00011002"
+        },
+        {
+          "id": "3.1",
+          "type": "direct_speaker",
+          "cart": [
+            0.0,
+            1.0,
+            0.0
+          ],
+          "speakerLabel": "RC_C",
+          "channelID": "AC_00011003"
+        },
+        {
+          "id": "4.1",
+          "type": "LFE"
+        },
+        {
+          "id": "5.1",
+          "type": "direct_speaker",
+          "cart": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "speakerLabel": "RC_Lss",
+          "channelID": "AC_00011005"
+        },
+        {
+          "id": "6.1",
+          "type": "direct_speaker",
+          "cart": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "speakerLabel": "RC_Rss",
+          "channelID": "AC_00011006"
+        },
+        {
+          "id": "7.1",
+          "type": "direct_speaker",
+          "cart": [
+            -1.0,
+            -1.0,
+            0.0
+          ],
+          "speakerLabel": "RC_Lrs",
+          "channelID": "AC_00011007"
+        },
+        {
+          "id": "8.1",
+          "type": "direct_speaker",
+          "cart": [
+            1.0,
+            -1.0,
+            0.0
+          ],
+          "speakerLabel": "RC_Rrs",
+          "channelID": "AC_00011008"
+        },
+        {
+          "id": "9.1",
+          "type": "direct_speaker",
+          "cart": [
+            -1.0,
+            0.0,
+            1.0
+          ],
+          "speakerLabel": "RC_Lts",
+          "channelID": "AC_00011009"
+        },
+        {
+          "id": "10.1",
+          "type": "direct_speaker",
+          "cart": [
+            1.0,
+            0.0,
+            1.0
+          ],
+          "speakerLabel": "RC_Rts",
+          "channelID": "AC_0001100a"
+        },
+        {
+          "id": "11.1",
+          "type": "audio_object",
+          "cart": [
+            -1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "id": "12.1",
+          "type": "audio_object",
+          "cart": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "id": "13.1",
+          "type": "audio_object",
+          "cart": [
+            -1.0,
+            -1.0,
+            1.0
+          ]
+        },
+        {
+          "id": "14.1",
+          "type": "audio_object",
+          "cart": [
+            1.0,
+            -1.0,
+            1.0
+          ]
+        }
+      ]
+    }
+  ],
+  "sampleRate": 48000,
+  "metadata": {
+    "sourceFormat": "ADM"
+  }
+}
