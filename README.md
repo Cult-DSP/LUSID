@@ -31,6 +31,7 @@ schema/lusid_scene_v1.0.schema.json
 LUSID/
 ├── README.md
 ├── AGENTS.md
+├── examples/
 ├── schema/
 │   └── lusid_scene_v1.0.schema.json
 └── internalDocs/
@@ -49,6 +50,8 @@ LUSID/
 
 - `schema/lusid_scene_v1.0.schema.json`  
   Canonical JSON Schema for LUSID Scene v1.0.
+- `examples/`  
+  Several Example LUSID scenes.
 
 ### Internal Development Files
 
@@ -115,13 +118,13 @@ Minimal structure:
 
 ## Node Types
 
-| Type | Description |
-| ---- | ----------- |
-| `audio_object` | Spatial audio source with Cartesian position |
-| `direct_speaker` | Fixed bed channel with optional speaker metadata |
-| `LFE` | Low-frequency effects node with no position |
-| `spectral_features` | Analysis metadata attached to a parent group |
-| `agent_state` | Agent or procedural metadata attached to a parent group |
+| Type                | Description                                             |
+| ------------------- | ------------------------------------------------------- |
+| `audio_object`      | Spatial audio source with Cartesian position            |
+| `direct_speaker`    | Fixed bed channel with optional speaker metadata        |
+| `LFE`               | Low-frequency effects node with no position             |
+| `spectral_features` | Analysis metadata attached to a parent group            |
+| `agent_state`       | Agent or procedural metadata attached to a parent group |
 
 ## Node ID Convention
 
@@ -164,11 +167,11 @@ Spatial nodes use Cartesian direction vectors:
 
 Coordinate meaning:
 
-| Axis | Meaning |
-| ---- | ------- |
-| `x` | left negative, right positive |
-| `y` | back negative, front positive |
-| `z` | down negative, up positive |
+| Axis | Meaning                       |
+| ---- | ----------------------------- |
+| `x`  | left negative, right positive |
+| `y`  | back negative, front positive |
+| `z`  | down negative, up positive    |
 
 Vectors are expected to be normalized direction vectors unless a consuming project explicitly defines another interpretation.
 
@@ -178,11 +181,11 @@ The top-level `timeUnit` field defines the unit used for all frame timestamps.
 
 Allowed values:
 
-| Value | Alias | Meaning |
-| ----- | ----- | ------- |
-| `seconds` | `s` | timestamps are seconds |
-| `samples` | `samp` | timestamps are sample indices |
-| `milliseconds` | `ms` | timestamps are milliseconds |
+| Value          | Alias  | Meaning                       |
+| -------------- | ------ | ----------------------------- |
+| `seconds`      | `s`    | timestamps are seconds        |
+| `samples`      | `samp` | timestamps are sample indices |
+| `milliseconds` | `ms`   | timestamps are milliseconds   |
 
 If `timeUnit` is `samples`, `sampleRate` should be provided.
 

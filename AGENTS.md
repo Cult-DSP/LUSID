@@ -325,6 +325,57 @@ The consuming project should treat LUSID as an input or output contract.
 
 Do not put consuming-project runtime assumptions into the LUSID schema.
 
+## Development Examples
+
+The following CULT DSP projects demonstrate how LUSID can be used in practice. These examples are informative, not normative. They show producer and consumer patterns, but they do not expand the LUSID specification.
+
+### CULT Transcoder: Producer Pattern
+
+[CULT Transcoder](https://github.com/Cult-DSP/cult_transcoder/tree/seed) is an example of a LUSID-producing tool. It converts external spatial audio metadata, especially ADM XML/WAV, into LUSID Scene JSON.
+
+In this pattern, LUSID acts as the normalized scene representation produced after format-specific parsing.
+
+A similar producer in another project should:
+
+- parse its own source format
+- map source metadata into LUSID nodes and frames
+- write a valid LUSID scene JSON file
+- validate the result against the LUSID schema
+
+Format-specific behavior, conversion policy, reports, package creation, and audio processing remain the producer project’s responsibility.
+
+### Spatial Root: Consumer Pattern
+
+[Spatial Root](https://github.com/Cult-DSP/spatialroot) is an example of a LUSID-consuming runtime. It uses LUSID scene JSON as scene metadata for playback and rendering.
+
+In this pattern, LUSID acts as the scene contract passed into a runtime.
+
+A similar consumer in another project should:
+
+- read a valid LUSID scene
+- map LUSID nodes into its internal scene model
+- apply its own layout, rendering, interpolation, and playback behavior
+- keep runtime assumptions outside the LUSID schema
+
+Spatial Root demonstrates one way to consume LUSID, but it does not define mandatory LUSID playback semantics.
+
+### What These Examples Do Not Define
+
+Spatial Root and CULT Transcoder are reference integrations, not normative parts of the LUSID specification.
+
+They do not define:
+
+- required renderer behavior
+- required speaker layout behavior
+- required ADM conversion policy
+- required package structure
+- required audio stem naming
+- required interpolation behavior
+- required CLI behavior
+- required report formats
+
+If a behavior is not represented in the LUSID schema, treat it as project-specific.
+
 ## If You Need Runtime Behavior
 
 If you need to describe how a renderer, parser, engine, or tool consumes LUSID, write that documentation in the consuming project.
