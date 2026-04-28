@@ -39,7 +39,7 @@ Use [schema/lusid_scene_v0.5.schema.json](schema/lusid_scene_v0.5.schema.json) a
   - **x**: Left (−) / Right (+)
   - **y**: Back (−) / Front (+)
   - **z**: Down (−) / Up (+)
-- Vectors are normalized to unit length by the renderer
+- Vectors are expected to be unit length
 
 ## Time Units
 

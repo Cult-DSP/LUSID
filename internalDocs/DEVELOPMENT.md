@@ -7,7 +7,7 @@
 
 ## Scope (Current State)
 
-LUSID is a **spec-only** repository: documentation, schema, and templates. No runtime code, pipelines, loaders, or parsers live here. All runtime behavior is owned by external components (for example, `cult-transcoder` and the spatialroot renderer).
+LUSID is a **spec-only** repository: documentation, schema, and templates. No runtime code, pipelines, loaders, or parsers live here.
 
 This file preserves historical implementation notes that are **no longer active** in this repo but may be useful for context.
 
@@ -19,18 +19,17 @@ This file preserves historical implementation notes that are **no longer active*
 
 - Added `direct_speaker` node type to represent fixed bed channels.
 - Established the `X.Y` node ID convention (group/level).
-- Introduced optional `duration` at the top level to preserve ADM duration.
+- Introduced optional `duration` at the top level to preserve scene duration metadata.
 
 ### XML Migration (Historical)
 
-- Replaced a two-step XML pipeline (XML → dicts → JSON → LUSID) with a direct XML → LUSID conversion.
+- Simplified XML-to-scene conversion by removing intermediate formats.
 - Evaluated stdlib `xml.etree.ElementTree` for faster parsing with higher memory usage.
 - Archived lxml/dict-based parsing paths.
 
 ### Old Schema Deprecation
 
-- Deprecated `renderInstructions.json` and associated loaders/transcoders.
-- Transitioned downstream tools to consume LUSID scenes directly.
+- Deprecated `renderInstructions.json` and related legacy artifacts.
 
 ---
 

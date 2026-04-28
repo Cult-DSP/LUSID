@@ -1,5 +1,3 @@
-#+#+#+#+
-
 # LUSID Scene v0.5.2 — Design Decisions and Influences (Spec-Only)
 
 **Internal design rationale for the LUSID scene specification**  

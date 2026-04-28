@@ -14,7 +14,7 @@
     "duration": {
       "type": "number",
       "minimum": 0,
-      "description": "Total duration of the scene in seconds, typically parsed from ADM metadata. Used as the canonical source of truth for render duration."
+      "description": "Total duration of the scene in seconds, typically parsed from metadata. Intended as the canonical duration for the scene."
     },
     "sampleRate": {
       "type": "integer",
@@ -128,7 +128,7 @@
             },
             "required": ["id", "type", "cart"],
             "additionalProperties": false,
-            "description": "Fixed-position bed channel. Renderer treats as static audio_object."
+            "description": "Fixed-position bed channel. Semantically equivalent to a static audio_object."
           }
         },
         {
@@ -142,7 +142,7 @@
             },
             "required": ["id", "type"],
             "additionalProperties": false,
-            "description": "LFE node. No positional data — routed directly to subwoofers."
+            "description": "LFE node. No positional data; reserved for low-frequency content."
           }
         },
         {
