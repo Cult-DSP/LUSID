@@ -312,7 +312,7 @@ For a consuming project, the normal pattern is:
 ```txt
 project/
 ├── external/
-│   └── LUSID/
+│   └── internal/LUSID/
 │       └── schema/
 │           └── lusid_scene_v1.0.schema.json
 ├── scenes/
@@ -331,7 +331,7 @@ The following CULT DSP projects demonstrate how LUSID can be used in practice. T
 
 ### CULT Transcoder: Producer Pattern
 
-[CULT Transcoder](https://github.com/Cult-DSP/cult_transcoder/tree/seed) is an example of a LUSID-producing tool. It converts external spatial audio metadata, especially ADM XML/WAV, into LUSID Scene JSON.
+[CULT Transcoder](https://github.com/Cult-DSP/internal/cult_transcoder/tree/seed) is an example of a LUSID-producing tool. It converts external spatial audio metadata, especially ADM XML/WAV, into LUSID Scene JSON.
 
 In this pattern, LUSID acts as the normalized scene representation produced after format-specific parsing.
 

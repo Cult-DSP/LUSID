@@ -37,18 +37,18 @@ This file preserves historical implementation notes that are **no longer active*
 
 These file moves occurred during the runtime transition and are preserved here only as historical notes.
 
-- `LUSID/src/xmlParser.py` → `LUSID/src/old_XML_parse/xmlParser.py`
-- `LUSID/tests/test_xmlParser.py` → `LUSID/tests/old_XML_parse/test_xmlParser.py`
-- `LUSID/src/transcoder.py` → `LUSID/src/old_schema/transcoder.py`
-- `LUSID/tests/test_transcoder.py` → `LUSID/tests/old_schema/test_transcoder.py`
+- `internal/LUSID/src/xmlParser.py` → `internal/LUSID/src/old_XML_parse/xmlParser.py`
+- `internal/LUSID/tests/test_xmlParser.py` → `internal/LUSID/tests/old_XML_parse/test_xmlParser.py`
+- `internal/LUSID/src/transcoder.py` → `internal/LUSID/src/old_schema/transcoder.py`
+- `internal/LUSID/tests/test_transcoder.py` → `internal/LUSID/tests/old_schema/test_transcoder.py`
 
 ---
 
 ## What Is Canonical Now
 
-- Schema: `LUSID/schema/lusid_scene_v0.5.schema.json`
-- Spec docs: `LUSID/README.md`
-- Agent spec: `LUSID/internalDocs/LUSID_AGENTS.md`
+- Schema: `internal/LUSID/schema/lusid_scene_v0.5.schema.json`
+- Spec docs: `internal/LUSID/README.md`
+- Agent spec: `internal/LUSID/internalDocs/LUSID_AGENTS.md`
 
 ---
 
@@ -57,4 +57,4 @@ These file moves occurred during the runtime transition and are preserved here o
 - Keep schema, examples, and docs aligned.
 - Avoid documenting runtime behavior here.
 - Treat this file as historical context only.
-- For design rationale and influences, see `LUSID/internalDocs/DESIGNDOC.md`.
+- For design rationale and influences, see `internal/LUSID/internalDocs/DESIGNDOC.md`.

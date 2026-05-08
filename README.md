@@ -32,7 +32,7 @@ For using LUSID with an agent, start with AGENTS.md
 ## What This Repo Contains
 
 ```txt
-LUSID/
+internal/LUSID/
 ├── README.md
 ├── AGENTS.md
 ├── examples/
